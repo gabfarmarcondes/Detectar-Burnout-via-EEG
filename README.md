@@ -3,6 +3,10 @@
 
 Detecção de Burnout em Tempo Real usando Few-Shot Learning com uma Camada de Interpretabilidade (XAI) gerando um mapa de calor do cérebro indicando porque a decisão foi tomada e Subject-Independent Classification com Transfer Learning pois será testado de pessoas de outros datasets.
 
+O conceito de **Independente do Sujeito (Subject-Independent)** significa que o modelo aprendeu reconhecer padrões universais humanos de estresse. Portanto, ele é agnóstico ao sujeito, mas sensível à qualidade e ao tipo de aquisição. 
+
+Já o conceito de **Aprendizado Few-Shot** é que aprende uma métrica de similaridade, ao contrário do Deep Learning tradicional, que exige grandes volumes de dados para cada nova classe. Isso permite que ele identifique se um sinal é Burnout ou Relaxado comparando-o com poucos exemplos de referência.
+
 # Dataset
 
 [Link do Dataset Usado](https://ieee-dataport.org/open-access/stew-simultaneous-task-eeg-workload-dataset)
@@ -144,7 +148,7 @@ O pipeline foi projetado para entregar:
     * Grad-CAM: mapa de atenção da IA:
         * As cores vermelhas e laranjas mostram exatamente onde a rede neural olhou para tomar a decisão de que esse paciente tem Burnout.
 
-## 2- Interpretação da Imagem: 
+## 2- Interpretação da Imagem de Calor: 
 Se olhar para onde estão as imagens vermelhas/laranjas no gráfico da direita:
 * Localização no Eixo Y (frequência):
     * As manchas quentes não estão espalhadas aleatoriamente. Elas estão concentradas principalmente na faixa central (entre 10 e o 18 no eixo Y).
@@ -157,6 +161,33 @@ Se olhar para onde estão as imagens vermelhas/laranjas no gráfico da direita:
 ## 3- Resumo:
 Figura X: Visualização de Explicabilidade (XAI) utilizando Grad-CAM. À esquerda, o espectrograma de entrada de um paciente diagnosticado com Burnout. À direita, o mapa de calor gerado pela rede neural, onde as regiões em vermelho indicam as features de maior relevância para a classificação. Observa-se que o modelo foca predominantemente nas faixas de frequência intermediárias e altas (correspondentes às bandas Beta), correlacionando-se com a literatura médica que associa essas frequências a estados de ansiedade, estresse cognitivo e alerta sustentado, típicos da síndrome de Burnout.
 
+## 4- Interpretação da Imagem da Matriz de Confusão: 
+A estrutura  é um quadrado dividido em 4 quadrantes:
+   ### 1. Eixo Vertical/Esquerdo:
+   O True Label. Representa o estado real do paciente.
+   * 0 = Relaxado.
+   * 1 = Burnout.
+   ### 2. Eixo Horizontal/Baixo:
+   Predicted Label. Representa o que a IA previu.
+   * 0 = IA disse que é Relaxado.
+   * 1 = IA disse que é Burnout.
+Portanto:
+* O quadrante superior esquerdo (0,0):
+   * O paciente estava relaxado.
+   * A IA disse que estava relaxado.
+   * Conclusão: A IA acertou o estado saudável.
+* O quadrante inferior direito (1,1):
+   * O paciente estava com burnout.
+   * A IA disse que o paciente estava com burnout.
+   * Conclusão: A IA acertou o estado de burnout.
+* O quadrante superior direito (0,1):
+   * O paciente estava relaxado.
+   * A IA disse que o paciente estava com burnout.
+   * Conclusão: A IA errou em dizer que o paciente estava com burnout.
+* O quadrante inferior esquerdo (1,0):
+   * O paciente estava com burnout.
+   * A IA disse que o paciente estava relaxado.
+   * Conclusão: A IA errou em dizer que o paciente estava relaxado.
 
 # Autor
 
