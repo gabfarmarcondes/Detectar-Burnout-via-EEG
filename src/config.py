@@ -7,6 +7,7 @@ DATA_DIR = PROJECT_ROOT / "data"
 RAW_DATA_DIR = DATA_DIR / "raw"
 PROCESSED_DATA_DIR = DATA_DIR / "processed"
 MODELS_DIR = PROJECT_ROOT / "results" / "saved_models"
+FIGURES_DIR = PROJECT_ROOT / "results" / "figures"
 
 # Cria diretórios se não existirem
 os.makedirs(RAW_DATA_DIR, exist_ok=True)

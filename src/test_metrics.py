@@ -78,7 +78,7 @@ print(cm)
 # (Opcional) Salvar imagem da Matriz
 try:
     plt.figure(figsize=(8, 6))
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=target_names, yticklabels=target_names)
+    sns.heatmap(cm/np.sum(cm), annot=True, fmt='.2%', cmap='Blues', xticklabels=target_names, yticklabels=target_names)
     plt.xlabel('AI PREDICTION')
     plt.ylabel('Reality')
     plt.title('Confusion Matrix - Burnout Detection')

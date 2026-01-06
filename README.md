@@ -26,7 +26,7 @@ As avaliações dos indivíduos é dado em um arquivo separado "rating.txt". Sã
 
 # Estrutura do Projeto
 ```text
-eeg-burnout-fewshot/
+eeg-Burnout-fewshot/
 │
 ├── data/                        # ONDE FICAM OS DADOS (NUNCA COMMITE NO GIT)
 │   ├── raw/                     # Dados originais intocados (ex: SEED-VIG dataset, .edf, .mat)
@@ -66,8 +66,8 @@ Recomenda-se o uso de um ambiente virtual (venv) para isolar as dependências.
 
 1. Clone o Repositório:
 ```bash
-git clone https://github.com/gabfarmarcondes/eeg-burnout-fewshot.git
-cd eeg-burnout-fewshot
+git clone https://github.com/gabfarmarcondes/eeg-Burnout-fewshot.git
+cd eeg-Burnout-fewshot
 ```
 
 2. Crie e ative o ambiente virtual:
@@ -121,6 +121,12 @@ Simula a chegada de um paciente desconhecido e realiza o diagnóstico:
 python3 src/inference.py
 ```
 
+10. Visualização Espacial:
+Mostra o mapa da cabeça onde ocorreu o Burnout, que é identificado pela vermelhidão da área.
+```bash
+python3 src/visualize_spatial.py
+```
+
 
 # Resultado Esperado
 
@@ -130,10 +136,12 @@ O pipeline foi projetado para entregar:
 
 * **Interpretabilidade:** O módulo XAI destaca atividades em frequências Beta (13-30Hz) como indicativo de Burnout, corroborando a literatura neurocientífica.
 
+* **Análise Espacial:** Mapeamento topográfico indicando maior ativação nas regiões do Lobo Frontal, corroborando a hipótese de sobrecarga cognitiva.
+
 
 # Explicação Das Figuras
 
-## 1- Explicação da imagem:
+## 1- Explicação da imagem do Paciente:
 * O lado esquerdo:
     * Input: É o espectograma médio. Ele mostra a foto da atividade elétrica do cérebro.
         * Eixo Y: frequências (de 0 a 40Hz).
@@ -144,7 +152,7 @@ O pipeline foi projetado para entregar:
     * Grad-CAM: mapa de atenção da IA:
         * As cores vermelhas e laranjas mostram exatamente onde a rede neural olhou para tomar a decisão de que esse paciente tem Burnout.
 
-## 2- Interpretação da Imagem: 
+## 1.1- Interpretação da Imagem da: 
 Se olhar para onde estão as imagens vermelhas/laranjas no gráfico da direita:
 * Localização no Eixo Y (frequência):
     * As manchas quentes não estão espalhadas aleatoriamente. Elas estão concentradas principalmente na faixa central (entre 10 e o 18 no eixo Y).
@@ -154,9 +162,39 @@ Se olhar para onde estão as imagens vermelhas/laranjas no gráfico da direita:
     * Em um cérebro relaxado (Ondas Alpha/Theta), a energia estaria mais baixa ou em frequências menores.
     * Conclusão: A IA aprendeu sozinha que, para detectar Burnout, ela precisa procurar por picos de atividade na faixa Beta, que indica um cébro que indica que não consegue relaxar ou está em estado de alerta constante.
 
-## 3- Resumo:
+## 1.2- Resumo:
 Figura X: Visualização de Explicabilidade (XAI) utilizando Grad-CAM. À esquerda, o espectrograma de entrada de um paciente diagnosticado com Burnout. À direita, o mapa de calor gerado pela rede neural, onde as regiões em vermelho indicam as features de maior relevância para a classificação. Observa-se que o modelo foca predominantemente nas faixas de frequência intermediárias e altas (correspondentes às bandas Beta), correlacionando-se com a literatura médica que associa essas frequências a estados de ansiedade, estresse cognitivo e alerta sustentado, típicos da síndrome de Burnout.
 
+## 2- Interpretação da Imagem da Matriz de Confusão: 
+A estrutura  é um quadrado dividido em 4 quadrantes:
+   ### 2.1. Eixo Vertical/Esquerdo:
+   O True Label. Representa o estado real do paciente.
+   * 0 = Relaxado.
+   * 1 = Burnout.
+   ### 2.2. Eixo Horizontal/Baixo:
+   Predicted Label. Representa o que a IA previu.
+   * 0 = IA disse que é Relaxado.
+   * 1 = IA disse que é Burnout.
+Portanto:
+* O quadrante superior esquerdo (0,0):
+   * O paciente estava relaxado.
+   * A IA disse que estava relaxado.
+   * Conclusão: A IA acertou o estado saudável.
+* O quadrante inferior direito (1,1):
+   * O paciente estava com Burnout.
+   * A IA disse que o paciente estava com Burnout.
+   * Conclusão: A IA acertou o estado de Burnout.
+* O quadrante superior direito (0,1):
+   * O paciente estava relaxado.
+   * A IA disse que o paciente estava com Burnout.
+   * Conclusão: A IA errou em dizer que o paciente estava com Burnout.
+* O quadrante inferior esquerdo (1,0):
+   * O paciente estava com Burnout.
+   * A IA disse que o paciente estava relaxado.
+   * Conclusão: A IA errou em dizer que o paciente estava relaxado.
+
+## 3. Explicação da Análise Espacial:
+A visualiação apresenta um mapa topográfico da atividade elétrica cerebral de cada paciente. A concentração de cores quentes na região anterior (testa) indica uma hiperativação do Lobo Frontal na faixa de frequência Beta. A barra lateral representa a intensidade do sinal em decibéis (dB). Cores mais escuras indicam maior atividade elétrica, associada a níveis elevados de estresse e Burnout.
 
 # Autor
 
@@ -165,4 +203,3 @@ Figura X: Visualização de Explicabilidade (XAI) utilizando Grad-CAM. À esquer
 * Curso: Ciência da Computação
 
 * Projeto: Neurocomputação e BCI
-
