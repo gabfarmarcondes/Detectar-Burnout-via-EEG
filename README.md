@@ -49,6 +49,7 @@ eeg-Burnout-fewshot/
 │   ├── train_fewshot.py         # Script para o Fine-Tuning (Few-Shot Learning)
 │   └── utils.py                 # Funções auxiliares (salvar modelos, plotar gráficos de loss)
 │   ├── visualize_xai_utils.py   # Script executável para gerar e salvar imagens do XAI
+|   |── visualize_spatial.py     # Script para gerar o mapa topográfico
 │   ├── xai_utils.py             # Biblioteca de funções para Grad-CAM e visualização
 │
 ├── results/                     # SAÍDAS DO MODELO
