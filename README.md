@@ -28,7 +28,7 @@ As avaliações dos indivíduos é dado em um arquivo separado "rating.txt". Sã
 ```text
 eeg-Burnout-fewshot/
 │
-├── data/                        # ONDE FICAM OS DADOS (NUNCA COMMITE NO GIT)
+├── data/                        # ONDE FICAM OS DADOS
 │   ├── raw/                     # Dados originais intocados (ex: SEED-VIG dataset, .edf, .mat)
 │   ├── processed/               # Dados limpos e convertidos em tensores/imagens (numpy/torch arrays)
 │
@@ -37,7 +37,7 @@ eeg-Burnout-fewshot/
 │   ├── 02_preprocessing_test.ipynb
 │   └── 03_shap_visualization_demo.ipynb
 │
-├── src/                         # CÓDIGO FONTE OFICIAL (O "Coração" do sistema)
+├── src/                         # CÓDIGO FONTE OFICIAL
 │   ├── __init__.py              # Inicializador do pacote
 │   ├── config.py                # Variáveis globais (Canais, Frequências, Caminhos)
 │   ├── data_loader.py           # Scripts para carregar e transformar dados (Dataset Class do PyTorch)
@@ -55,6 +55,9 @@ eeg-Burnout-fewshot/
 ├── results/                     # SAÍDAS DO MODELO
 │   ├── saved_models/            # Pesos treinados (.pth)
 │   ├── figures/                 # Gráficos gerados (Matrizes, Heatmaps)
+│── ablation_study/              # Estudo de Treinamento da Rede Com e Sem o Filtro
+│   ├── run_batch.py             # Roda o train_fewshot.py 5 vezes e captura o Loss
+│   ├── plot_ablation.py         # Plota o Gráfico de Linha do Loss Com e Sem o Filtro
 │
 ├── README.md                    # Documentação do projeto
 └── requirements.txt             # Dependências do Python
@@ -128,6 +131,27 @@ Mostra o mapa da cabeça onde ocorreu o Burnout, que é identificado pela vermel
 python3 src/visualize_spatial.py
 ```
 
+11. Rodando o Estudo do Filtro:
+Foi estudado como a rede se comportaria com e sem o filtro passa-banda (1-40Hz). Para a execução do estudo:
+1. Execute:
+```bash
+python3 src/preprocessing.py
+```
+2. Execute:
+```bash
+cd results/ablation_study
+```
+
+```bash
+python3 ablation_study/run_batch.py
+```
+Irá capturar o Loss, com o filtro, 5 vezes no terminal, incluindo a média e o desvio padrão.
+
+12. Gráfico do Estudo:
+Foi plotado um gráfico do estudo para mostrar visualmente os dados obtidos.
+```bash
+python3 ablation_study/plot_ablation.py
+```
 
 # Resultado Esperado
 
@@ -196,6 +220,14 @@ Portanto:
 
 ## 3. Explicação da Análise Espacial:
 A visualiação apresenta um mapa topográfico da atividade elétrica cerebral de cada paciente. A concentração de cores quentes na região anterior (testa) indica uma hiperativação do Lobo Frontal na faixa de frequência Beta. A barra lateral representa a intensidade do sinal em decibéis (dB). Cores mais escuras indicam maior atividade elétrica, associada a níveis elevados de estresse e Burnout.
+
+## 4. Explicação do Gráfico do Ablation Study:
+O gráfico representa o estudo comparativo de impacto do filtro passa-banda (1-40Hz) na convergência da Rede Neural. O experimento consistiu em 5 sessões de treinamento independentes para avaliar a estabilidade do modelo:
+* **Linha Verde (Com Filtro):** Representa o modelo final validado. A oscilação observada reflete a complexidade de aprender padrões neurofisiológicos reais (ondas Beta) sem a influência de ruídos.
+* **Linha Vermelha (Sem Filtro):** Representa o controle (dados brutos). A menor oscilação sugere que a rede encontrou "atalhos" (overfitting) baseados em artefatos musculares constantes, o que invalida seu uso clínico.
+
+> **Como Criar o Gráfico:** Está explícito a forma de criar o gráfico no tópico **Instalação e Configuração** nos passos 11 e 12.
+> **Detalhes Técnicos:** Para a discussão completa sobre a decisão de manter o filtro e a análise estatística dos dados, consulte o relatório técnico em [`results/ablation_study/RESULTS.md`](results/ablation_study/RESULTS.md).
 
 # Autor
 
