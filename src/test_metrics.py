@@ -75,7 +75,7 @@ print("\nMatriz de Confusão:")
 cm = confusion_matrix(y_true, y_pred)
 print(cm)
 
-# (Opcional) Salvar imagem da Matriz
+# Salvar imagem da Matriz
 try:
     plt.figure(figsize=(8, 6))
     sns.heatmap(cm/np.sum(cm), annot=True, fmt='.2%', cmap='Blues', xticklabels=target_names, yticklabels=target_names)

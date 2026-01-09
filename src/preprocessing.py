@@ -111,7 +111,7 @@ def process_dataset():
         raw = read_stew_text_file(file)
         if raw is None: continue
 
-        # 2. FIltrar (1-40Hz)
+        # 2. Filtrar (1-40Hz)
         raw.filter(config.FILTER_LOW, config.FILTER_HIGH, verbose=False)
         
         # 3. Cortar em Janelas (Epochs) e em Janelas de 4 segundos, sem sobreposição

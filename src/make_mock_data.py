@@ -50,7 +50,7 @@ def generate_mock_dataset(subject_id=1):
     file_name = f"sub{subject_id:02d}_task_mock.fif"
     save_path = config.RAW_DATA_DIR / file_name
     raw.save(save_path, overwrite=True)
-    print(f"✅ [MOCK] Arquivo salvo: {file_name}")
+    print(f"File Saved {file_name}")
 
 if __name__ == "__main__":
     # Gera 3 sujeitos para testarmos o código
