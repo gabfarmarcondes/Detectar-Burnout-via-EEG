@@ -1,3 +1,15 @@
+import sys
+import os
+
+# Diretório atual do arquivo train_svm.py
+curren_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Sobe dois níveis para chegar na raiz do projeto
+project_root = os.path.abspath(os.path.join(curren_dir, '../../'))
+
+# Adiciona a raiz ao caminho de busca do Python
+sys.path.append(project_root)
+
 from matplotlib import pyplot as plt
 import numpy as np
 import torch
@@ -5,7 +17,8 @@ import seaborn as sns
 from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-import config
+from src import config
+
 
 DATA_PATH = config.PROCESSED_DATA_DIR
 

@@ -1,4 +1,3 @@
-
 # Detecção de Burnout via EEG: Uma Abordagem Independente de Sujeito com Aprendizado Few-Shot e Explicabilidade (XAI).
 
 Detecção de Burnout em Tempo Real usando Few-Shot Learning com uma Camada de Interpretabilidade (XAI) gerando um mapa de calor do cérebro indicando porque a decisão foi tomada e Subject-Independent Classification com Transfer Learning pois será testado de pessoas de outros datasets.
@@ -23,6 +22,40 @@ As linhas de cada datafile corresponde à amostra das gravações e as colunas c
 
 As avaliações dos indivíduos é dado em um arquivo separado "rating.txt". São apresentados em um formato de valores separados por vírgulas: número do indivíduo, avaliação do descanso, avaliação do teste. Por exemplo: 1, 2, 8, seria que o indivíduo 1 avaliou como 2 o seu descanso e 8 no teste. Os indivíduos 5, 24 e 42 não possuem avaliação.
 
+### Conceitos Fundamentais para Entendimento do Projeto
+Para processar os sinais cerebrais (EEG) de forma eficiente, este projeto utiliza estruturas de dados específicas do **Pytorch**. Abaixo está explicado como os dados são organizados na memória.
+
+1. **Tensor**
+Na matemática e na computação, um **Tensor** é uma generalização de matrizes para múltiplas dimensões de um único tipo. ALgumas características do **Tensor**:
+* É a estrutura de dados padrão para Deep Learning porque permite operações matemáticas em paralelo na GPU.
+* Possui suporte integrado para GPUs habilitadas da NVIDIA-CUDA, habilitando, significantemente, speedups para grandes computações
+* Integração de automação de cálculo de gradientes via ```autograd``` do Pytorch, essencial para treinamento de redes neurais.
+* Gerenciamento de memória automática com garbage collection.
+* Muito similar com o NumPy, facilitando a conversão de dados.
+No contexto deste projeto, cada amostra de EEG de 4 segundos não é apenas uma lista de números, são matrizes de 3 dimensões:
+* **Shape (Formato) de uma amostra:** [14, 33, 17]:
+   * **14 Canais:** Os sensores físicos (eletrodos) na cabeça.
+   * **33 Frequências:** A decomposição do sinal (Alpha, Beta, Gamma, etc).
+   * **17 Janelas de Tempo:** Como o sinal muda ao longo daqueles 4 segundos.
+
+2. **Batch (Lote):**
+O **Batch** é um agrupamento de várias amostras (tensores) para serem processadas simultaneamente pela Rede Neural. Em vez de a rede aprender com um paciente por vez, ela olha para um grupo, no caso, de 32 pacientes de uma vez só.
+* **Shape do Batch:** [32, 14, 33, 17].
+   * A primeira dimensão (32) representa a quantidade de amostras naquele agrupamento.
+Por que usar Batches:
+* **Estabilidade Estatística:** No aprendizado Few-Shot (_Prototypical Networks_), precisa-se de várias amostras para calcular uma média(protótipo) confiável da classe. Um único exemplo ruidoso poderia enganar a rede, mas a média de 32 exemplos cancela os ruídos.
+* **Eficiência de Hardware:** As GPUs são projetadas para multiplicar matrizes gigantes. Processar 32 exames juntos leva, praticamente, o mesmo tempo que processar 1, acelerando drasticamente o treinamento.
+* **Nível Arquitetural:** O código utiliza a função ```utils.get_prototypes```, que opera sobre o batch inteiro para transformar ele em conhecimento. O processo ocorre em três etapas:
+   1. **Filtragem (Masking):** O algoritmo separa os embeddings (vetores de características) em dois grupos: os que pertencem à classe "Relaxado" e os que pertencem à classe "Burnout".
+   2. **Cálculo da Média (Mean):** Para cada grupo, ele calcula a média artimética de todos os vetores. Esse vetor médio é chamado de protótipo.
+   3. **Empilhamento (Stacking):** A função retorna um novo tensor contendo apenas esses dois vetores ideais. É contra esses protótipos que a rede medirá as distâncias para aprender a classificar novos exemplos.
+
+3. 
+graph TD
+    A[Sinal EEG Bruto] --> B[Tensor 3D<br>(1 Amostra)]
+    B --> C{DataLoader}
+    C --> D[Tensor 4D<br>(Batch de 32 Amostras)]
+    D --> E[Rede Neural<br>(Processamento Paralelo)]
 
 # Estrutura do Projeto
 ```text
