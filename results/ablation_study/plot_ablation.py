@@ -1,47 +1,50 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-# teste A: com filtro
-losses_with_filter = [0.3174, 0.3436, 0.3085, 0.3473, 0.2845]
+# Dados obtidos nos experimentos (Médias e Desvios Padrão)
+# Cenário A: Isolamento de Sujeito (O "Correto")
+mean_iso = 92.44
+std_iso = 0.97
 
-# teste B: sem filtro
-losses_without_filter = [0.3134, 0.3312, 0.2948, 0.3285, 0.3211]
+# Cenário B: Random Split (O "Misturado")
+mean_rnd = 89.06
+std_rnd = 0.40
 
-# eixo X (número das sessões)
-sessions = [1, 2, 3, 4, 5]
- 
-# configuração do gráfico
-plt.figure(figsize=(10,6))
+# Configuração do Gráfico
+labels = ['Isolamento de Sujeito\n(Metodologia Correta)', 'Random Split\n(Sem Isolamento)']
+means = [mean_iso, mean_rnd]
+stds = [std_iso, std_rnd]
+colors = ['#2ecc71', '#e74c3c'] # Verde (Bom) e Vermelho (Ruim/Controle)
 
-# plotando a linha verde (com filtro)
-plt.plot(sessions, losses_with_filter, marker='o', linestyle='-', linewidth=2,
-         color='#2ca02c', label='Com Filtro (1-40Hz)')
+x_pos = np.arange(len(labels))
 
-# plotando a linha vermelha (sem filtro)
-plt.plot(sessions, losses_without_filter, marker='s', linestyle='--', linewidth=2,
-         color='#d62728', label='Sem Filtro (Raw)')
+fig, ax = plt.subplots(figsize=(8, 6))
 
-# Preenchendo a área entre as linhas para destacar a diferença (Opcional, fica bonito)
-plt.fill_between(sessions, losses_with_filter, losses_without_filter, color='gray', alpha=0.1)
+# Criar barras com erro (capsize coloca o tracinho no topo da linha de erro)
+bars = ax.bar(x_pos, means, yerr=stds, align='center', alpha=0.9, color=colors, ecolor='black', capsize=10, width=0.5)
 
-# Estética
-plt.title('Training Stability: Comparison of 5 sessions', fontsize=14, fontweight='bold')
-plt.xlabel('Session Number (Execution)', fontsize=12)
-plt.ylabel('Final Error (Loss)', fontsize=12)
-plt.xticks(sessions) # Garante que mostre 1, 2, 3, 4, 5 inteiro
-plt.grid(True, linestyle=':', alpha=0.6)
-plt.legend(fontsize=11)
+# Configurações visuais
+ax.set_ylabel('Acurácia (%)', fontsize=12)
+ax.set_title('Ablation Study: Impacto da Metodologia de Validação', fontsize=14, fontweight='bold')
+ax.set_xticks(x_pos)
+ax.set_xticklabels(labels, fontsize=11)
+ax.set_ylim(80, 100) # Focando a escala entre 80% e 100% para ver a diferença
+ax.yaxis.grid(True, linestyle='--', alpha=0.7)
 
-# Adicionando os valores nos pontos para facilitar a leitura
-for i, txt in enumerate(losses_with_filter):
-    plt.annotate(f"{txt:.3f}", (sessions[i], losses_with_filter[i]), 
-                 textcoords="offset points", xytext=(0,10), ha='center', color='#2ca02c', fontweight='bold')
+# Adicionar os valores em cima das barras
+def add_labels(bars):
+    for bar in bars:
+        height = bar.get_height()
+        ax.annotate(f'{height:.2f}%',
+                    xy=(bar.get_x() + bar.get_width() / 2, height),
+                    xytext=(0, 15),  # Deslocamento vertical do texto
+                    textcoords="offset points",
+                    ha='center', va='bottom', fontsize=12, fontweight='bold')
 
-for i, txt in enumerate(losses_without_filter):
-    plt.annotate(f"{txt:.3f}", (sessions[i], losses_without_filter[i]), 
-                 textcoords="offset points", xytext=(0,-15), ha='center', color='#d62728', fontweight='bold')
+add_labels(bars)
 
+# Salvar e Mostrar
 plt.tight_layout()
-plt.savefig('results/ablation_study/ablation_final_stats.png', dpi=300)
-print("Graphics Generated in: ablation_final_stats.png")
-plt.show()
+plt.savefig('results/ablation_study/ablation_chart_validation.png', dpi=300)
+print("Gráfico salvo em: results/ablation_study/ablation_chart_validation.png")
+plt.show() # Descomente se quiser ver na tela

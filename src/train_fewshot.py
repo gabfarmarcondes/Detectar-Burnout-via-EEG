@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import torch.optim as optim
-from torch.utils.data import TensorDataset, DataLoader
+from torch.utils.data import TensorDataset, DataLoader, random_split
 
 from model import EEGEmbedding
 import utils
@@ -17,20 +17,26 @@ except FileNotFoundError:
     print("ERROR: .NPY FILE NOT FOUND. Run preprocessing.py first.")
     exit()
 
+# Código sem o Random Split para o estudo do Ablation Study
 # Convertendo para tensors e enviando para o device
 X_tensor = torch.from_numpy(X_numpy).float().to(device)
 Y_tensor = torch.from_numpy(Y_numpy).long().to(device)
+full_dataset = TensorDataset(X_tensor, Y_tensor)
 
 # Definindo o ponto de corte 80/20
-total_size = len(X_tensor)
-split_index = int(0.8 * total_size)
-
+total_size = len(full_dataset)
+train_size = int(0.8 * total_size)
+test_size = total_size - train_size
 
 # Fatiamento Sequencial (Slicing)
 # Isso garante que os primeiros 80% fiquem no treino
 # E os últimos 20% fiquem no teste
-train_dataset = TensorDataset(X_tensor[:split_index], Y_tensor[:split_index])
-test_dataset = TensorDataset(X_tensor[split_index:], Y_tensor[split_index:])
+# train_dataset = TensorDataset(X_tensor[:train_size], Y_tensor[:train_size])
+# test_dataset = TensorDataset(X_tensor[train_size:], Y_tensor[train_size:])
+
+# --- Mudança aqui para o Ablation Study ---
+# Comentar as linhas 22 e 23 e Descomentar a linha abaixo
+train_dataset, test_dataset = random_split(full_dataset, [train_size, test_size])
 
 # Criando loaders finais
 # shuffle=True no treino para variar o treinamento dentro do grupo de treino
@@ -176,10 +182,10 @@ for epoch in range(num_epochs):
         avg_val_loss = total_val_loss / val_batches
         avg_val_acc = total_val_acc / val_batches
 
-print(f"Epoch: {epoch+1}/{num_epochs}")
-print(f"   Train -> Loss: {avg_train_loss:.4f} | Acc: {avg_train_acc*100:.2f}%")
-print(f"   Test  -> Error (Loss): {avg_val_loss:.4f} | Acc: {avg_val_acc*100:.2f}%")
-print("-" * 60)
+        print(f"Epoch: {epoch+1}/{num_epochs}")
+        print(f"   Train -> Loss: {avg_train_loss:.4f} | Acc: {avg_train_acc*100:.2f}%")
+        print(f"   Test  -> Error (Loss): {avg_val_loss:.4f} | Acc: {avg_val_acc*100:.2f}%")
+        print("-" * 60)
 
 
 print("Training Completed")
