@@ -1,3 +1,4 @@
+import shutil
 import sys
 import os
 import torch
@@ -80,11 +81,37 @@ async def predict(file : UploadFile = File(...)): # File(...) significa obrigat�
     # Verificação de segurança
     if model is None:
         raise HTTPException(status_code=500, detail="Model was not Loaded in the Server.")
-    return {
-        "filename": file.filename,
-        "message": "Model Ready for Inference.",
-        "device_used": str(device)
-    }
+    
+    allowed_extensions = (".txt", ".npy")
+    if not file.filename.endswith(allowed_extensions):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid File. Only these{allowed_extensions} are Accepted"
+        )
+    
+    temp_filename = f"temp_{file.filename}"
+    try:
+        # Copia o fluxo de bits do upload para um arquivo físico no disco
+        with open(temp_filename, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        file_size = os.path.getsize(temp_filename)
+
+        return {
+            "filename": file.filename,
+            "status": "upload_success",
+            "saved_as": temp_filename,
+            "size_bytes": file_size,
+            "message": "Arquivo validado e salvo temporariamente. Pronto para o pipeline."
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error to Process the File: {str(e)}")
+
+    finally:
+        # Apagará o arquivo temporário
+        if os.path.exists(temp_filename):
+            os.remove(temp_filename)
+            print(f"Cleaning: File {temp_filename} Removed.")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
