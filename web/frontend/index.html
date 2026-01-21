@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroCompute | Burnout Detection System</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">🧠 NeuroCompute</div>
+            <p class="subtitle">Neural Diagnosis via Few-Shot Learning</p>
+        </header>
+
+        <main>
+            <div class="upload-card" id="drop-zone">
+                <div class="icon-upload">📂</div>
+                <h3>Drag & Drop your EEG file (.txt)</h3>
+                <p>Compatible with STEW/OpenBCI Datasets</p>
+
+                <input type="file" id="file-input" hidden accept=".txt">
+
+                <button class="btn-primary" onclick="document.getElementById('file-input').click()">Select File</button>
+            </div>
+
+            <div class="result-card hidden" id="result-card">
+                <div class="status-indicator">
+                    <span class="pulse" id="status-pulse"></span>
+                    <h2 id="result-title">Processing...</h2>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric">
+                        <span class="label">AI Confidence</span>
+                        <span class="value" id="confidence-value">--%</span>
+                    </div>
+
+                    <div class="metric">
+                        <span class="label">Epochs Analyzed</span>
+                        <span class="value" id="window-value">--</span>
+                    </div>
+                </div>
+
+                <div class="distance-visualizer">
+                    <div class="labels">
+                        <span>🧘 Relaxed</span>
+                        <span>🔥 Burnout</span>
+                    </div>
+
+                    <div class="bar-container">
+                        <div class="bar-fill" id="dist-bar"></div>
+                        <div class="bar-marker" id="dist-marker"></div>
+                    </div>
+
+                    <p class="explanation" id="explanation-text">
+                        Euclidean Distance to Reference Prototypes
+                    </p>
+                </div>
+
+                <button class="btn-secondary" onclick="location.reload()">New Analysis</button>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
