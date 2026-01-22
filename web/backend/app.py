@@ -2,12 +2,7 @@ from contextlib import asynccontextmanager
 import shutil
 import sys
 import os
-import torch
-import numpy as np
-import pandas as pd
-import mne
-from scipy import signal
-from src import config
+import tempfile
 
 # Diretório atual
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -26,19 +21,6 @@ import uvicorn
 from src.inference import BurnoutSystem
 
 
-# Inicializa o app
-# Ponto principal da interação para criar toda a API do projeto
-app = FastAPI(title="NeuroCompute API")
-
-# Configurar o CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"], # Aceita conexões de qualquer lugar
-    allow_credentials=True,
-    allow_methods=["*"], # Aceita métodos HTTP
-    allow_headers=["*"] # pares chave-valor que transportam metadados importantes sobre a requisição ou resposta
-)
-
 burnout_system = BurnoutSystem()
 
 @asynccontextmanager
@@ -52,7 +34,18 @@ async def lifespan(app: FastAPI):
     else:
         print("System ready and loaded.")
     yield
-app = FastAPI(lifespan=lifespan)
+# Inicializa o app
+# Ponto principal da interação para criar toda a API do projeto
+app = FastAPI(title="NeuroCompute API", lifespan=lifespan)
+
+# Configurar o CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # Aceita conexões de qualquer lugar
+    allow_credentials=True,
+    allow_methods=["*"], # Aceita métodos HTTP
+    allow_headers=["*"] # pares chave-valor que transportam metadados importantes sobre a requisição ou resposta
+)
 
 # Rotas
 @app.get("/")
@@ -71,9 +64,11 @@ async def predict(file : UploadFile = File(...)): # File(...) significa obrigat�
     
     temp_filename = f"temp_{file.filename}"
     try:
+        suffix = ".txt"
         # Copia o fluxo de bits do upload para um arquivo físico no disco
-        with open(temp_filename, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            shutil.copyfileobj(file.file, tmp)
+            temp_filename = tmp.name
 
         result = burnout_system.predict_patient(temp_filename)
 
@@ -90,8 +85,8 @@ async def predict(file : UploadFile = File(...)): # File(...) significa obrigat�
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        if os.path.exists(temp_filename):
-            os.remove(temp_filename)
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+        if 'temp_filename' in locals() and os.path.exists(temp_filename):
+            try:
+                os.remove(temp_filename)
+            except:
+                pass
