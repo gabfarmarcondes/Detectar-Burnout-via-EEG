@@ -65,11 +65,63 @@ async function uploadFile(file) {
         if (!response.ok) throw new Error("API ERROR");
 
         const data = await response.json();
+        displayResults(data);
 
         console.log("Received from Python: ", data);
-        alert("Success. Look the JSON in the console (F12)");
     } catch (error){
         console.log("Error: ", error);
-        alert("Error to Send File");
+        alert("Error to Process: " + error.message);
     }
+}
+
+function displayResults(data){
+    // Elementos do HTML
+    const resultCard = document.getElementById('result-card');
+    const resultTitle = document.getElementById('result-title');
+    const statusPulse = document.getElementById('status-pulse');
+    const confValue = document.getElementById('confidence-value');
+    const winValue = document.getElementById('window-value');
+    const distMarker = document.getElementById('dist-marker');
+
+    // Extrair os dados do JSON vistos no console
+    const prediction = data.prediction;
+    const confidence = data.confidence;
+    const windows = data.details.windows_analyzed;
+
+    // Mostrar o Card
+    resultCard.classList.remove('hidden');
+
+    // Rolar a tela até o resultado
+    resultCard.scrollIntoView({behavior: 'smooth'});
+
+    // Lógica de cores
+    const isBurnout = prediction === "Burnout";
+    const color = isBurnout ? "#ef4444" : "#10b981";
+    const text = isBurnout ? "Burnout Detected" : "Relaxed State"
+
+    // Atualizar o DOM
+    resultTitle.innerText = text;
+    resultTitle.style.color = color;
+
+    confValue.innerText = confidence;
+    winValue.innerText = windows;
+
+    let rawConfidence = confidence.replace(/[^0-9.]/g, ''); 
+    let percent = parseFloat(rawConfidence);
+
+    // Se for Burnout (lado direito da barra), soma. Se Relaxado (esquerdo), subtrai.
+    let position = 50; 
+    if (prediction === "Burnout") {
+        // Ex: 50 + (90 / 2) = 95% (Direita)
+        position = 50 + (percent / 2.2); // Dividi por 2.2 pra não colar na borda
+    } else {
+        // Ex: 50 - (90 / 2) = 5% (Esquerda)
+        position = 50 - (percent / 2.2);
+    }
+
+    // Trava limites (Segurança)
+    position = Math.max(2, Math.min(position, 98));
+
+    // Aplica
+    distMarker.style.left = `${position}%`;
 }
