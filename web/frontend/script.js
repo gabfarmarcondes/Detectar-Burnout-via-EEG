@@ -2,6 +2,10 @@ const API_URL = "http://127.0.0.1:8000/predict";
 
 const dropZone = document.getElementById('drop-zone');
 const fileInput = document.getElementById('file-input');
+const resultCard = document.getElementById('result-card');
+const resultTitle = document.getElementById('result-title');
+const distBarFill = document.getElementById('dist-bar');
+const visualizer = document.querySelector('.distance-visualizer');
 
 
 // Previne que o computador abra o arquivo
@@ -51,12 +55,47 @@ function handleFiles(files){
 }
 
 async function uploadFile(file) {
-    // Prepara o envio
+    
+    // 1. Prepara a tela
+    resultCard.classList.remove('hidden');
+    resultCard.scrollIntoView({behavior: 'smooth'});
+    visualizer.classList.add('loading');
+    
+    resultTitle.style.color = "#94a3b8";
+    
+    // 2. Configura a Barra de Progresso
+    let progress = 0;
+    distBarFill.style.width = "0%";
+    distBarFill.style.transition = "width 0.2s linear";
+    
+    const progressInterval = setInterval(() => {
+        let increment;
+
+        if (progress < 20) {
+            increment = Math.random() * 0.8; 
+        } 
+        else if (progress < 50) {
+            increment = Math.random() * 0.3; 
+        } 
+        else {
+            increment = Math.random() * 0.1; 
+        }
+
+        progress += increment;
+        
+        if (progress > 90) progress = 90;
+        
+        distBarFill.style.width = `${progress}%`;
+        resultTitle.innerText = `Processing... ${Math.round(progress)}%`;
+
+    }, 100);
+
+    // 4. Envio Real para a API
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-        // Envia para API Python
+        // Aguarda o Python
         const response = await fetch(API_URL, {
             method: 'POST',
             body: formData
@@ -65,12 +104,27 @@ async function uploadFile(file) {
         if (!response.ok) throw new Error("API ERROR");
 
         const data = await response.json();
-        displayResults(data);
+        
+        // 5. Finalização (O Grand Finale)
+        clearInterval(progressInterval); // Para o loop falso
+        
+        // Força ir para 100% visualmente
+        distBarFill.style.transition = "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)";
+        distBarFill.style.width = "100%";
+        resultTitle.innerText = "Finalizing Analysis... 100%";
+        setTimeout(() => {
+            visualizer.classList.remove('loading');
+            distBarFill.style.background = "";
 
-        console.log("Received from Python: ", data);
+            displayResults(data);
+        }, 1200); 
+
     } catch (error){
+        clearInterval(progressInterval);
         console.log("Error: ", error);
-        alert("Error to Process: " + error.message);
+        resultTitle.innerText = "Error: " + error.message;
+        resultTitle.style.color = "#ef4444";
+        distBarFill.style.width = "0%";
     }
 }
 
@@ -83,23 +137,18 @@ function displayResults(data){
     const winValue = document.getElementById('window-value');
     const distMarker = document.getElementById('dist-marker');
 
-    // Extrair os dados do JSON vistos no console
     const prediction = data.prediction;
     const confidence = data.confidence;
     const windows = data.details.windows_analyzed;
 
-    // Mostrar o Card
     resultCard.classList.remove('hidden');
 
-    // Rolar a tela até o resultado
     resultCard.scrollIntoView({behavior: 'smooth'});
 
-    // Lógica de cores
     const isBurnout = prediction === "Burnout";
     const color = isBurnout ? "#ef4444" : "#10b981";
     const text = isBurnout ? "Burnout Detected" : "Relaxed State"
 
-    // Atualizar o DOM
     resultTitle.innerText = text;
     resultTitle.style.color = color;
 
@@ -109,7 +158,6 @@ function displayResults(data){
     let rawConfidence = confidence.replace(/[^0-9.]/g, ''); 
     let percent = parseFloat(rawConfidence);
 
-    // Se for Burnout (lado direito da barra), soma. Se Relaxado (esquerdo), subtrai.
     let position = 50; 
     if (prediction === "Burnout") {
         // Ex: 50 + (90 / 2) = 95% (Direita)
