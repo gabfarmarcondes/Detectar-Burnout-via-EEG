@@ -158,3 +158,12 @@ body {
     font-size: 0.8rem;
 }
 .btn-secondary:hover { border-color: var(--text-main); color: var(--text-main); }
+
+.loading .bar-marker {
+    display: none;
+}
+
+.loading .bar-fill {
+    transition: width 0.2s ease;
+    background: #10b981;
+}
