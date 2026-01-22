@@ -1,12 +1,12 @@
 :root {
-    --bg-color: #0f172a;      /* Azul muito escuro */
-    --card-color: #1e293b;    /* Azul acinzentado */
-    --primary: #3b82f6;       /* Azul vibrante */
+    --bg-color: #0f172a;
+    --card-color: #1e293b;
+    --primary: #3b82f6;
     --primary-hover: #2563eb;
-    --text-main: #f8fafc;     /* Quase branco */
-    --text-muted: #94a3b8;    /* Cinza claro */
-    --success: #10b981;       /* Verde */
-    --danger: #ef4444;        /* Vermelho */
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --success: #10b981;
+    --danger: #ef4444;
 }
 
 body {
@@ -115,12 +115,25 @@ body {
     background: #334155;
     border-radius: 7px;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
+}
+
+.bar-marker {
+    width: 18px;
+    height: 18px;
+    background: #ffffff;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 10px rgba(255,255,255,0.8);
+    transition: left 1s ease-out;
+    z-index: 10;
 }
 
 .bar-fill {
     height: 100%;
-    width: 0%; /* Será preenchido pelo JS */
+    width: 0%;
     background: linear-gradient(90deg, var(--success), var(--danger));
     border-radius: 7px;
     transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);

@@ -112,19 +112,29 @@ class BurnoutSystem:
             dist_relax = utils.calc_euclidiean_distance(patient_profile, self.prototypes[0].unsqueeze(0)).item()
             dist_burnout = utils.calc_euclidiean_distance(patient_profile, self.prototypes[1].unsqueeze(0)).item()
 
+            # Coloca as distâncias em um tensor
+            dist_tensor = torch.tensor([dist_relax, dist_burnout])
+
+            # Confianaça da IA
+            # 3.0 ~ 5.0 confiança moderada
+            # Quanto maior o número, menos confiante
+            temperature = 3.0
+
+            # Softmax negativa porque menor distância é melhor
+            probs = torch.nn.functional.softmax(-dist_tensor / temperature, dim=0)
+
+            # Pega a probabilidade mais alta
+            confidence_score = probs.max().item()
+            confidence_pct = confidence_score * 100
+
         # 4. Decisão
         # Quanto MENOR a distância, mais parecido é.
         if dist_burnout < dist_relax:
             prediction = "Burnout"
-            confidence_raw = dist_relax - dist_burnout # Diferença de distância = confiança
             status_color = "red"
         else:
             prediction = "Relaxed"
-            confidence_raw = dist_burnout - dist_relax
             status_color = "green"
-
-        # Normaliza confiança para 50-99% (apenas visual)
-        confidence_pct = min(50 + (confidence_raw * 50), 99.9)
 
         return {
             "prediction": prediction,
