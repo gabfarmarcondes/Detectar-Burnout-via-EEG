@@ -72,7 +72,7 @@ def plot_explanation(original_data, heatmap, title="XAI Explanation", save_path=
     # Média entre os canais para virar uma imagem 2D (Freq x Tempo)
     avg_spectrogram = np.mean(original_img, axis=0) 
     
-    plt.figure(figsize=(12, 5))
+    fig = plt.figure(figsize=(12, 5))
     
     # 1. Espectrograma Original (Média dos canais)
     plt.subplot(1, 2, 1)
@@ -103,5 +103,4 @@ def plot_explanation(original_data, heatmap, title="XAI Explanation", save_path=
         plt.savefig(save_path)
         print(f"Explanatory Imagem Saved in: {save_path}")
     
-    plt.show()
-    plt.close()
+    plt.close(fig)

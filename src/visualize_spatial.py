@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pylab as plt
 import mne
 import os
@@ -124,8 +126,6 @@ def generate_spatial_analysis():
     save_path = config.FIGURES_DIR / "spatial_analysis_where.png"
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
     print(f"Image saved in: {save_path}")
-    plt.show()
-
 
 # Bloco final para rodar o script
 if __name__ == "__main__":

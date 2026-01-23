@@ -1,8 +1,5 @@
 import torch
 import numpy as np
-import pandas as pd
-import mne
-from scipy import signal
 import os
 import sys
 
@@ -11,6 +8,8 @@ sys.path.append(curren_dir)
 
 from model import EEGEmbedding
 import utils
+from preprocessing import preprocess_file
+import matplotlib
 import config
 
 SFREQ = config.SAMPLE_RATE
@@ -41,8 +40,8 @@ class BurnoutSystem:
             return False
         # Carregar dados para calibragem
         try:
-            X_numpy = np.load(data_path + '/X_stew.npy')
-            Y_numpy = np.load(data_path + '/Y_stew.npy')
+            X_numpy = np.load(os.path.join(data_path, 'X_stew.npy'))
+            Y_numpy = np.load(os.path.join(data_path, 'Y_stew.npy'))
 
             X_tensor = torch.from_numpy(X_numpy).float().to(self.device)
             Y_tensor = torch.from_numpy(Y_numpy).long().to(self.device)
@@ -57,39 +56,7 @@ class BurnoutSystem:
         except Exception as e:
             print(f"Error to calculate prototypes: {e}")
             return False
-    
-    def preprocess_txt(self, filepath):
-        # Transformar .txt bruto em tensor
-        try:
-            data = pd.read_csv(filepath, sep=r"\s+", header=None, engine='python')
-        except:
-            data = pd.read_csv(filepath, sep=',', header=None)
-        
-        data = data.apply(pd.to_numeric, errors='coerce').dropna()
-        data_np = data.values.T
 
-        if data_np.shape[0] > 14: data_np = data_np[:14, :]
-        elif data_np.shape[0] < 14: raise ValueError("Less than 14 channels found.")
-
-        info = mne.create_info(ch_names=CHANNELS, sfreq=SFREQ, ch_types='eeg')
-        raw = mne.io.RawArray(data_np, info, verbose=False)
-        raw.filter(1., 40., verbose=False)
-
-        if raw.times[-1] < 4.0:
-            raise ValueError("Audio too short (minimun 4s)")
-        
-        epochs = mne.make_fixed_length_epochs(raw, duration=4.0, verbose=False)
-        epoch_data = epochs.get_data(copy=True, verbose=False)
-
-        processed_list = []
-        for window in epoch_data:
-            f, t, Zxx = signal.stft(window, fs=SFREQ, nperseg=64, noverlap=32)
-            spec = np.log1p(np.abs(Zxx))
-            processed_list.append(spec)
-
-        batch_tensor = torch.tensor(np.array(processed_list), dtype=torch.float32).to(self.device)
-
-        return batch_tensor
     def predict_patient(self, filepath):
         """
         Faz a inferência usando Distância Euclidiana aos Protótipos
@@ -98,7 +65,7 @@ class BurnoutSystem:
             raise Exception("Sistema não inicializado.")
 
         # 1. Processa o arquivo do paciente
-        input_tensor = self.preprocess_txt(filepath)
+        input_tensor = preprocess_file(filepath, device=self.device)
         num_windows = input_tensor.shape[0]
 
         with torch.no_grad():

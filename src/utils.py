@@ -10,8 +10,7 @@ A lógica será:
 # Será preciso calcular a distância entre dois vetores usando a Distância Euclidiana.
 
 def calc_euclidiean_distance(x1, x2):
-    return torch.sqrt(torch.sum(torch.pow(x1 - x2, 2), 1))
-    # TODO: Refatorar esta linha
+    return torch.nn.functional.pairwise_distance(x1, x2, p=2)
 
 def get_prototypes(embeddings, targets, num_class):
     # embeddings: Tensor(Batch, 64)
