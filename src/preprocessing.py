@@ -14,6 +14,7 @@ from scipy import signal
 from pathlib import Path
 from tqdm import tqdm
 import config
+import torch
 
 SFREQ = config.SAMPLE_RATE # frequência do dataset
 
@@ -66,6 +67,37 @@ def transform_to_spectrogram(epoch_data, sfreq):
     spectogram = np.log1p(spectogram)
 
     return spectogram
+
+def preprocess_file(filepath, device='cpu'):
+    # Função que processa um arquivo
+    # Lê -> Filtra -> Janela -> Espectograma -> Tensor Pytorch
+
+    # Leitura
+    raw = read_stew_text_file(filepath)
+
+    if raw is None:
+        raise ValueError("Error to read file or insufficient (minimun 14 channels).")
+    
+    # Filtro (1~40Hz)
+    raw.filter(config.FILTER_LOW, config.FILTER_HIGH, verbose=False)
+
+    # Janelamento
+    if raw.times[-1] < config.EPOCH_LENGTH:
+        raise ValueError(f"Audio too short. Minimum {config.EPOCH_LENGTH}")
+    
+    epochs = mne.make_fixed_length_epochs(raw, duration=config.EPOCH_LENGTH, verbose=False)
+    epoch_data = epochs.get_data(copy=True, verbose=False)
+
+    # Espectograma
+    processed_list = []
+    for window in epoch_data:
+        spec = transform_to_spectrogram(window, config.SAMPLE_RATE)
+        processed_list.append(spec)
+    
+    # Converte para Tensor e pronto para a IA
+    batch_tensor = torch.tensor(np.array(processed_list), dtype=torch.float32).to(device)
+
+    return batch_tensor
 
 def process_dataset():
     print("Starting the STEW Dataset Processing")

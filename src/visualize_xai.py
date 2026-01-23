@@ -1,8 +1,17 @@
+import os
+import sys
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+sys.path.append(current_dir)
+
 import torch
 import numpy as np
 import random
 from model import EEGEmbedding
 from xai_utils import GradCAM, plot_explanation
+import matplotlib
+matplotlib.use('Agg')
 
 # 1. Configuração do Ambiente
 # Verifica se tem placa de vídeo (GPU) ou vai usar o processador (CPU)
@@ -22,8 +31,9 @@ model.eval()
 # 3. Carregar os Dados Processados
 # Precisamos das imagens dos cérebros para testar
 print("Loading data.")
-X = np.load('data/processed/X_stew.npy') # As imagens (espectrogramas)
-Y = np.load('data/processed/Y_stew.npy') # Os rótulos (0=Relaxado, 1=Burnout)
+data_dir = os.path.join(project_root, 'data', 'processed')
+X = np.load(os.path.join(data_dir, 'X_stew.npy')) # As imagens (espectrogramas)
+Y = np.load(os.path.join(data_dir, 'Y_stew.npy')) # Os rótulos (0=Relaxado, 1=Burnout)
 
 # Transforma de Numpy (matemática comum) para Tensor (matemática de IA)
 X_tensor = torch.from_numpy(X).float().to(device)
@@ -58,9 +68,14 @@ print("Generating explanatory heatmap.")
 heatmap = cam(input_tensor)
 
 # 7. Visualizar e Salvar
+
+# Garante que a pasta de figuras existe (Evita erro de FileNotFoundError)
+figures_dir = os.path.join(project_root, 'results', 'figures')
+os.makedirs(figures_dir, exist_ok=True)
+
 # Pega a imagem original (para mostrar ao fundo) e o mapa de calor (para mostrar por cima)
 # Salva na pasta results para você pegar depois
-save_path = f"results/figures/explanation_pacient_{pacient_idx}.png"
+save_path = os.path.join(figures_dir, f"explanation_pacient_{pacient_idx}.png")
 
 plot_explanation(
     original_data=input_tensor, 
@@ -70,4 +85,3 @@ plot_explanation(
 )
 
 print(f"\nDONE! Image saved at: {save_path}")
-print("Open this image to see where the AI focused!")
