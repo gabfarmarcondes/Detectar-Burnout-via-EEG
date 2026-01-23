@@ -132,7 +132,6 @@ function displayResults(data){
     // Elementos do HTML
     const resultCard = document.getElementById('result-card');
     const resultTitle = document.getElementById('result-title');
-    const statusPulse = document.getElementById('status-pulse');
     const confValue = document.getElementById('confidence-value');
     const winValue = document.getElementById('window-value');
     const distMarker = document.getElementById('dist-marker');
@@ -172,4 +171,15 @@ function displayResults(data){
 
     // Aplica
     distMarker.style.left = `${position}%`;
+
+    const plotContainer = document.getElementById('spatial-plot-container');
+    const plotImg = document.getElementById('spatial-plot-img');
+    const imageSource = data.image_base64 || (data.details && data.details.image_base64);
+
+    if (imageSource) {
+        plotImg.src = "data:image/png;base64," + imageSource;
+        plotContainer.classList.remove('hidden');
+    } else {
+        console.warn("image_base64 not found in JSON:", data);
+    }
 }
