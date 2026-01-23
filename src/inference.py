@@ -10,8 +10,13 @@ from model import EEGEmbedding
 import utils
 from preprocessing import preprocess_file
 import matplotlib
-import config
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import io
+import base64
+from sklearn.decomposition import PCA
 
+import config
 SFREQ = config.SAMPLE_RATE
 CHANNELS = config.CHANNELS
 
@@ -102,6 +107,8 @@ class BurnoutSystem:
         else:
             prediction = "Relaxed"
             status_color = "green"
+        
+        plot_base64 = self.generate_spatial_plot(patient_profile)
 
         return {
             "prediction": prediction,
@@ -111,5 +118,82 @@ class BurnoutSystem:
                 "to_burnout": dist_burnout
             },
             "windows_analyzed": num_windows,
-            "status_color": status_color
+            "status_color": status_color,
+            "image_base64": plot_base64
         }
+    
+    def generate_spatial_plot(self, patient_tensor):
+        # Gera um gráfico 2D comparando o paciente com os protótipos
+        # Retorna String Base64 da imagem.
+
+        try:
+            # Preparar os dados
+            # Traz de volta da GPU para a CPU e converte para numpy
+            proto_relax = self.prototypes[0].cpu().numpy()
+            proto_burnout = self.prototypes[1].cpu().numpy()
+
+            # O paciente vem (1, 64), usa-se flatten para virar vetor (64,)
+            patient = patient_tensor.cpu().numpy().flatten()
+
+            # Matriz com 3 linhas (Relax, Burnout, Paciente)
+            X = np.array([proto_relax, proto_burnout, patient])
+
+            # PCA: reduz de 64 dimensões para 2
+            pca = PCA(n_components=2)
+            X_2d = pca.fit_transform(X)
+
+            # Plotagem
+            plt.style.use('dark_background')
+            fig, ax = plt.subplots(figsize=(6,4), dpi=120)
+            ax.axis('off')
+
+            colors = ['#10b981', '#ef4444', '#3b82f6']
+            labels = ['Relaxed Proto', 'Burnout Proto', 'YOU']
+            markers = ['o', 'o', 'X']
+            sizes = [150, 150, 250]
+
+            for i in range(3):
+                ax.scatter(X_2d[i, 0], X_2d[i, 1], 
+                          c=colors[i], 
+                          label=labels[i], 
+                          s=sizes[i], 
+                          marker=markers[i],
+                          edgecolors='white', # Borda branca para contraste
+                          linewidth=1.5,
+                          zorder=5)
+                
+            # Linha Paciente -> Relaxado
+            ax.plot([X_2d[2,0], X_2d[0,0]], [X_2d[2,1], X_2d[0,1]], 
+                   linestyle='--', color='#cbd5e1', alpha=0.6, linewidth=1.2)
+            
+            # Linha Paciente -> Burnout
+            ax.plot([X_2d[2,0], X_2d[1,0]], [X_2d[2,1], X_2d[1,1]], 
+                   linestyle='--', color='#cbd5e1', alpha=0.6, linewidth=1.2)
+            
+            # Linha de Base (Relaxado <-> Burnout) para fechar o triângulo
+            ax.plot([X_2d[0,0], X_2d[1,0]], [X_2d[0,1], X_2d[1,1]], 
+                   linestyle='--', color='#94a3b8', alpha=0.8, linewidth=1.5)
+
+            # Legenda
+            legend = ax.legend(loc='upper center', 
+                             bbox_to_anchor=(0.5, -0.05),
+                             ncol=3,
+                             frameon=False,
+                             fontsize=10,
+                             labelcolor='#cbd5e1')
+
+            plt.tight_layout()
+            
+            # 4. Salvar
+            buf = io.BytesIO()
+            plt.savefig(buf, format='png', transparent=True, bbox_inches='tight')
+            buf.seek(0)
+            plt.close(fig)
+
+            # 5. Base64
+            image_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+            return image_base64
+
+        except Exception as e:
+            print(f"Plot Error: {e}")
+            return None
