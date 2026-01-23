@@ -182,4 +182,15 @@ function displayResults(data){
     } else {
         console.warn("image_base64 not found in JSON:", data);
     }
+
+    const xaiContainer = document.getElementById('xai-container');
+    const xaiImg = document.getElementById('xai-img');
+
+    // Tenta pegar da raiz ou details
+    const xaiSource = data.xai_base64 || (data.details && data.details.xai_base64);
+
+    if (xaiSource) {
+        xaiImg.src = "data:image/png;base64," + xaiSource;
+        xaiContainer.classList.remove('hidden');
+    }
 }

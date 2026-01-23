@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import io
 import base64
 from sklearn.decomposition import PCA
+from xai_utils import GradCAM
 
 import config
 SFREQ = config.SAMPLE_RATE
@@ -110,6 +111,8 @@ class BurnoutSystem:
         
         plot_base64 = self.generate_spatial_plot(patient_profile)
 
+        xai_base64 = self.generate_xai_plot(input_tensor)
+
         return {
             "prediction": prediction,
             "confidence": f"{confidence_pct:.1f}%",
@@ -119,7 +122,8 @@ class BurnoutSystem:
             },
             "windows_analyzed": num_windows,
             "status_color": status_color,
-            "image_base64": plot_base64
+            "image_base64": plot_base64,
+            "xai_base64": xai_base64
         }
     
     def generate_spatial_plot(self, patient_tensor):
@@ -196,4 +200,82 @@ class BurnoutSystem:
 
         except Exception as e:
             print(f"Plot Error: {e}")
+            return None
+    
+    def generate_xai_plot(self, patient_tensor):
+        # Gerar o Mapa de calor (Grad-CAM) mostrand onde a IA focou.
+        # Retorna um String Base64 da imagem.
+        
+        try:
+        # Configurar Grad-CAM na camada convolucional 1.
+        # O input_tensor precisa ter dimensão (1, 14, 33, 17).
+            if patient_tensor.dim() == 2: # Se vier (64, feature) não serve, precisa do tensor original.
+                # Precisa passar po tensor original, não o embedding.
+                print("Error: Grad-CAM requires the original image tensor, not embedding.")
+                return None
+            
+            cam = GradCAM(model=self.model, target_layer=self.model.conv1)
+
+            # Gerar o HeatMap
+            # Precisa garantir que o tensor tenha a dimendsão batch (1, C, H, W).
+            # Como o process_file retorna (N_janelas, 14, 33, 17), vamos pegar a média ou a primeira janela representativa.
+            # Para XAI ficar bonito, vai ser pego a janela que teve a maior ativção (pior caso) ou a média.
+            # Vamos simplificar pegando a média das janelas para representar o paciente como um todo.
+            target_input = torch.mean(patient_tensor, dim=0).unsqueeze(0) # (1, 14, 33, 17)
+            heatmap = cam(target_input)
+
+            # Preparar a plotagem
+            original_img = target_input[0].detach().cpu().numpy()
+            avg_spectrogram = np.mean(original_img, axis=0) # Média dos canais para visualizar
+
+            plt.style.use('dark_background')
+            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(24, 14), dpi=300)
+
+            title_font = {'fontsize': 20, 'fontweight': 'bold', 'color': '#cbd5e1'}
+            label_font = {'fontsize': 20, 'fontweight': 'bold', 'color': '#94a3b8'}
+            tick_font_size = 16
+            cbar_font = 16
+
+            # Plot 1: Espectrograma Original
+            im1 = ax1.imshow(avg_spectrogram, aspect='auto', origin='lower', 
+                           cmap='viridis', interpolation='nearest')
+            ax1.set_title("Input Signal Spectrogram", **title_font, pad=20)
+            ax1.set_ylabel("Frequency (Hz)", **label_font)
+            ax1.set_xticks([]) 
+            ax1.tick_params(axis='y', labelsize=tick_font_size, colors='#94a3b8')
+
+            cbar1 = plt.colorbar(im1, ax=ax1, pad=0.02)
+            cbar1.set_label("Intensity (dB)", fontsize=cbar_font, color='#94a3b8')
+            cbar1.ax.tick_params(labelsize=tick_font_size, colors='#94a3b8')
+
+            # Plot 2: Onde a IA Olhou (Heatmap)
+            ax2.imshow(avg_spectrogram, aspect='auto', origin='lower', 
+                      cmap='gray', interpolation='nearest', alpha=0.3)
+            
+            im2 = ax2.imshow(heatmap, aspect='auto', origin='lower', 
+                           cmap='jet', interpolation='nearest', alpha=0.7)
+            
+            ax2.set_title("AI Attention (Burnout Pattern)", **title_font, pad=20)
+            ax2.set_ylabel("Frequency (Hz)", **label_font)
+            ax2.set_xlabel("Time (Epochs)", **label_font)
+            ax2.tick_params(labelsize=tick_font_size, colors='#94a3b8')
+
+            cbar2 = plt.colorbar(im2, ax=ax2, pad=0.04)
+            cbar2.set_label("Activation Importance", fontsize=cbar_font, color='#94a3b8', labelpad=15)
+            cbar2.ax.tick_params(labelsize=10, colors='#94a3b8')
+
+            plt.tight_layout(h_pad=4)
+
+            # 4. Salvar em Base64
+            buf = io.BytesIO()
+            plt.savefig(buf, format='png', transparent=True, bbox_inches='tight')
+            buf.seek(0)
+            plt.close(fig)
+
+            return base64.b64encode(buf.getvalue()).decode('utf-8')
+
+        except Exception as e:
+            print(f"XAI Plot Error: {e}")
+            import traceback
+            traceback.print_exc()
             return None

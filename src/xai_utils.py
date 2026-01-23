@@ -27,39 +27,44 @@ class GradCAM:
         self.gradients = grad_output[0]
 
     def __call__(self, x, class_idx=None):
-        # 1. Forward Pass
-        self.model.zero_grad()
-        output = self.model(x)
+        # Habilita o motor de gradientes (mesmo se estivermos no modo eval)
+        with torch.enable_grad():
+            # O "Pulo do Gato": Força o tensor de entrada a rastrear gradientes
+            # Isso constrói o grafo necessário para o backward hook funcionar
+            x.requires_grad_(True)
 
-        # Como foi usado o Metric Learning (Embeddings) e não Classificação direta,
-        # Iŕa ser calculado o gradiente baseado na soma do vetor de embedding.
-        # Isso diz: O que na imagem fez esse vetor ser assim
-        score = output.sum()
-        
-        # 2. Backward Pass (Calcula os gradientes)
-        score.backward(retain_graph=True)
+            # 1. Forward Pass
+            self.model.zero_grad()
+            output = self.model(x)
 
-        # 3. Gerar o Mapa de Calor
-        gradients = self.gradients
-        activations = self.activations
-        
-        # Global Average Pooling dos gradientes
-        weights = torch.mean(gradients, dim=[2, 3], keepdim=True)
-        
-        # Multiplicação ponderada das ativações
-        cam = torch.sum(weights * activations, dim=1, keepdim=True)
-        
-        # Aplica ReLU
-        cam = F.relu(cam)
-        
-        # Interpola para o tamanho original da imagem de entrada (33x17)
-        cam = F.interpolate(cam, size=(x.shape[2], x.shape[3]), mode='bilinear', align_corners=False)
-        
-        # Normaliza entre 0 e 1 para plotar
-        cam_min, cam_max = cam.min(), cam.max()
-        cam = (cam - cam_min) / (cam_max - cam_min + 1e-8)
-        
-        return cam.detach().cpu().numpy()[0, 0]
+            # Como foi usado o Metric Learning (Embeddings), calculamos o score pela soma
+            score = output.sum()
+            
+            # 2. Backward Pass (Calcula os gradientes)
+            # O retain_graph=True é necessário pois faremos operações com os gradientes depois
+            score.backward(retain_graph=True)
+
+            # 3. Gerar o Mapa de Calor
+            gradients = self.gradients
+            activations = self.activations
+            
+            # Global Average Pooling dos gradientes
+            weights = torch.mean(gradients, dim=[2, 3], keepdim=True)
+            
+            # Multiplicação ponderada das ativações
+            cam = torch.sum(weights * activations, dim=1, keepdim=True)
+            
+            # Aplica ReLU (Remove ativações negativas/inibitórias)
+            cam = F.relu(cam)
+            
+            # Interpola para o tamanho original da imagem de entrada (33x17)
+            cam = F.interpolate(cam, size=(x.shape[2], x.shape[3]), mode='bilinear', align_corners=False)
+            
+            # Normaliza entre 0 e 1 para plotar
+            cam_min, cam_max = cam.min(), cam.max()
+            cam = (cam - cam_min) / (cam_max - cam_min + 1e-8)
+            
+            return cam.detach().cpu().numpy()[0, 0]
 
 def plot_explanation(original_data, heatmap, title="XAI Explanation", save_path=None):
     """
