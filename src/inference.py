@@ -16,6 +16,9 @@ import io
 import base64
 from sklearn.decomposition import PCA
 from xai_utils import GradCAM
+import mne
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from visualize_spatial import generate_topomap_base64
 
 import config
 SFREQ = config.SAMPLE_RATE
@@ -113,6 +116,8 @@ class BurnoutSystem:
 
         xai_base64 = self.generate_xai_plot(input_tensor)
 
+        topo_base64 = generate_topomap_base64(input_tensor)
+
         return {
             "prediction": prediction,
             "confidence": f"{confidence_pct:.1f}%",
@@ -123,7 +128,8 @@ class BurnoutSystem:
             "windows_analyzed": num_windows,
             "status_color": status_color,
             "image_base64": plot_base64,
-            "xai_base64": xai_base64
+            "xai_base64": xai_base64,
+            "topomap_base64": topo_base64
         }
     
     def generate_spatial_plot(self, patient_tensor):

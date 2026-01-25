@@ -1,132 +1,101 @@
+import torch
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pylab as plt
+import io
+import base64
 import mne
 import os
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
 import config
+CHANNELS = config.CHANNELS
+SFREQ = config.SAMPLE_RATE
 
 
-# Define que será usado dados simulados ou tentar carregar reais
-# Será deixado como True para testar o gráfico
-USE_MOCK_DATA = True
+def generate_topomap_base64(patient_tensor):
+    # Recebe o tensor de dados reais do paciente, calcula a energia por canal
+    # e retorna uma string base64 da imagem do topomap
 
-def generate_spatial_analysis():
-    print("Mapping 10-20 Configuration")
-    
-    # Nome dos canais do Dataset STEW
-    ch_names = config.CHANNELS
-    # Frequência de Amostragem
-    sfreq = config.SAMPLE_RATE
+    try:
+        # Nome dos canais do Dataset STEW
+        ch_names = config.CHANNELS
+        # Frequência de Amostragem
+        sfreq = config.SAMPLE_RATE
 
-    # Cria o objeto de informações do MNE
-    info = mne.create_info(ch_names=ch_names, sfreq=sfreq, ch_types='eeg')
+        # Processar a energia do sinal
+        # O tensor chega da IA. Precisa converter para NumPy
+        # Se vier com dimensão de batch, remover o batch
+        if torch.is_tensor(patient_tensor):
+            if patient_tensor.dim() == 4: # [batch, canal, freq, tempo]
+                data = torch.mean(patient_tensor, dim=0).cpu().numpy()
+            else:
+                data = patient_tensor.cpu().numpy()
+        else:
+            data = patient_tensor # já é numpy
 
-    # Carrega o mapa padrão de cabeças (Standard 10-20)
-    # A montagem 10-20 define as coordenadas X,Y e Z de cada eletrodo numa cabeça padrão
-    montage = mne.channels.make_standard_montage('standard_1020')
-    info.set_montage(montage)
+        # Filtragem Espacial
+        # O tensor em formato (14 canais, 33 frequências, X tempo)
+        # Assumindo que o eixo 1 é a frequência
+        # Queremos apenas o Beta (13 - 30Hz)
+        if data.ndim == 3: # (Canais, Freq, Tempo)
+            # Fatia-se apenas a banda de interesse (Beta)
+            # Se a pessoa estiver relaxada, Beta é baixxo
+            # Se a pessoa estiver com burnout, Beta é alto
+            beta_band_data = data[:, 13:30, :]
 
-    # Criar um paciente que tem burnout. Para validar a visualização, cria-se uma onda senoidal de 22Hz (BETA) apenas nos canais da testa.
-    if USE_MOCK_DATA:
-        print("Obtaining Data")
+            # Calcula-se a energia (RMS) apenas desta faixa
+            channel_energy = np.sqrt(np.mean(beta_band_data**2, axis=(1,2)))
+        else:
+            # Fallback se o tensor não for espectograma
+            channel_energy = np.sqrt(np.mean(data**2, axis=1))
         
-        # Cria 4 segundos de silêncio
-        # 1e-6 um ruído quase 0
-        # O objetivo é provar que a visualização funciona. Pois é preciso testar os ruídos reais e não os que provavelmente estariam lá.
-        # Para isso, é preciso começar com silêncio absoluto e
-            # injtetar estresse apenas na testa garante que que o mapa final mostre a vermelhidão foi culpa do código.
-        # Janelamento: o 4 segundos foi definido pelo preprocessing.py e no config.py (Epoch).
-        # Tamanho padrão da literatura de EEG e é bom para ter uma boa resolução no Espectograma (STFT).
-        n_sample = sfreq * 4
-        data = np.random.rand(len(ch_names), n_sample) * 1e-6
+        # Configuração MNE
+        info = mne.create_info(ch_names=CHANNELS, sfreq=SFREQ, ch_types='eeg')
+        montage = mne.channels.make_standard_montage('standard_1020')
+        info.set_montage(montage)
 
-        # Injetar estresse (Beta 22Hz) no frontal
-        # O lobo frontal foi escolhido baseado na neurociência. O burnout e a ansiedade estão associados a uma superaquecimento do córtex pré-frontal (testa).
-        # A função np.linspace() é a função Linear. O computador precisa saber em que momento cada onda acontece. Com os parâmetros:
-        """
-        start: 0. Começa no segundo 0.
-        stop: 4. Termina no segundo 4.
-        num: n_sample=512. Dividir esse intervalo de 0 a 4 em 512 pedaços iguais. [0.00 até 4.00]. Isso será útil no gráfico.
-        """
-        t = np.linspace(0, 4, n_sample)
-
-        # Cria uma onda rápida (sinal de ansiedade)
-        # Cérebro relaxado ele pulsa devagar (ALPHA 8-12Hz)
-        # Cérebro estressado ele pulsa rápido (BETA 13-30Hz)
-        # Foi escolhido 22Hz para simular um estado de alerta/ansiedade claro.
-        # A função np.sin(), seno. Ela desenha a onda perfeita (sobe e desce). 
-        # A fórmula matemática de uma onda física é: A * sin(2π * f * t). Sendo:
-        """
-        np.pi: o computador calcula o seno em radianos. Uma volta completa é 2π.
-        22: é a frequência de tempo. Dizemos que para a onda completar 22 ciclos a cada segundo.
-        t: é a régua de tempo que foi criada antes.
-        20e-6: A amplitude. O seno puro vai de -1 a 1 e por conta dos sinais EEG serem tão pequenos, o 20e-6 (20 x 10⁻⁶) ajusta a escala para parecer um sinal elétrico real.
-        """
-        beta_wave = np.sin(2 * np.pi * 22 * t) * 45e-6 # Hiperatividade Cortical acima do normal(35e-6 a 50e-6) mas abaixo do nível epiléptico (~100µV)
-
-        # Índices dos canais da testa (frontal lobe)
-        # AF3, F7, F3, F4, F8, AF4
-        # Os números significam a posição de cada canal no array de canais.
-        # O loop for passa apenas por essas posições da matriz de dados e soma com as ondas de ansiedade.
-        frontal_indices = [0, 1, 2, 11, 12, 13]
-
-        # Soma-se a onda de estresse apenas nos canais citados acima
-        for i in frontal_indices:
-            data[i] += beta_wave
+        plt.style.use('dark_background')
+        fig, ax = plt.subplots(figsize=(5, 5), dpi=300)
         
-        # Empacota tudo num objeto Raw do MNE
-        raw = mne.io.RawArray(data, info)
-    else:
-        pass
+        ax.set_title("Beta Band Activity (Stress Marker)\nRed = High Burnout Indicators", 
+                    color='#cbd5e1', fontsize=11, fontweight='bold', pad=15)
 
-    print("Filtering Frequencies")
+        # cmap='Reds' -> Vermelho agora vai significar "Muita Onda Beta" (Estresse)
+        # vmin/vmax ajuda a travar a escala para comparar melhor
+        im, _ = mne.viz.plot_topomap(channel_energy, info, axes=ax, show=False, 
+                                     cmap='Reds', # Ou 'inferno' para mais contraste
+                                     contours=6,
+                                     extrapolate='head',
+                                     outlines='head',
+                                     sphere=0.11,
+                                     image_interp='cubic')
+        
+        # Barra de Cor
+        ax_divider = make_axes_locatable(ax)
+        cax = ax_divider.append_axes("right", size="5%", pad="5%")
+        cbar = plt.colorbar(im, cax=cax)
+        cbar.set_label('Beta Power (uV)', color='#94a3b8', fontsize=9)
+        cbar.ax.tick_params(colors='#94a3b8', labelsize=8)
 
-    # Aplica o filtro passa-banda: deixar passar apenas só o que é BETA (13 a 30 Hz)
-    raw.filter(l_freq=13, h_freq=30, fir_design='firwin')
+        # 6. Salvar
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', transparent=True, bbox_inches='tight')
+        buf.seek(0)
+        encoded_string = base64.b64encode(buf.getvalue()).decode('utf-8')
+        plt.close(fig)
 
-    # Cálculo de Energia (PSD).
-    # Método Welch, uma técnica para reduzir ruído ao dividir dados em segmentos, aplica janelamento e média de periodogramas. 
-    # Calcular a densidade Espectral de Potência (PSD).
-    # Basicamente, é o volume médio da atividade elétrica em cada eletrodo.
-    print("Calculating Energy (PSD)")
-    
-    # Calcula a potência usando o método Welch.
-    spectrum = raw.compute_psd(method='welch')
+        return encoded_string
 
-    # Extrai os dados numéricos (Power Spectral Density)
-    psds, freqs = spectrum.get_data(return_freqs=True)
+    except Exception as e:
+        print(f"Erro Topomap: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
 
-    # Tira a média de todas as frequências da banda para ter um número só por canal
-    psds_mean = psds.mean(axis=1)
 
-    # Converte para decibéis (dB) para o gráfico ficar mais legível
-    psds_db = 10 * np.log10(psds_mean)
-
-    print("Generating Topomap")
-    fig, ax = plt.subplots(figsize=(6,5))
-
-    # Plota a cabeça
-    im, _ = mne.viz.plot_topomap(
-     psds_db, info, 
-     axes=ax, 
-     show=False,
-     cmap='Reds', # Vermelho = Alta energia
-     sphere=0.12) # Ajusta da geometrida da cabeça
-
-    # Enfeites do gráfico
-    plt.title("Where is the Burnout?\nSpatial Activation(BETA Band)", fontsize=12, fontweight='bold')
-    cbar = plt.colorbar(im, ax=ax, orientation='vertical', shrink=0.7)
-    cbar.set_label('Intensity (dB)')
-
-    # Salvar
-    if not os.path.exists(config.FIGURES_DIR):
-        os.makedir(config.FIGURES_DIR)
-    
-    save_path = config.FIGURES_DIR / "spatial_analysis_where.png"
-    plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    print(f"Image saved in: {save_path}")
 
 # Bloco final para rodar o script
 if __name__ == "__main__":
-    generate_spatial_analysis()
+    generate_topomap_base64()

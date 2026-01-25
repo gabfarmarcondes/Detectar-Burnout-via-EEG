@@ -193,4 +193,13 @@ function displayResults(data){
         xaiImg.src = "data:image/png;base64," + xaiSource;
         xaiContainer.classList.remove('hidden');
     }
+
+    const topoContainer = document.getElementById('topomap-container');
+    const topoImg = document.getElementById('topomap-img');
+    const topoSource = data.topomap_base64 || (data.details && data.details.topomap_base64);
+
+    if (topoSource) {
+        topoImg.src = "data:image/png;base64," + topoSource;
+        topoContainer.classList.remove('hidden');
+    }
 }
