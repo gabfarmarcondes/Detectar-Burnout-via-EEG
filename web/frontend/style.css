@@ -18,18 +18,21 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    padding: 20px; /* Importante para não colar na borda em telas pequenas */
+    box-sizing: border-box;
 }
 
+/* --- MUDANÇA PRINCIPAL 1: LARGURA DO SITE --- */
 .container {
     width: 100%;
-    max-width: 550px;
-    padding: 2rem;
+    max-width: 1200px; /* Aumentado para caber os gráficos lado a lado */
+    padding: 1rem;
     text-align: center;
 }
 
 /* Tipografia */
 .logo {
-    font-size: 2.2rem;
+    font-size: 2.5rem; /* Um pouco maior para impor respeito */
     font-weight: 800;
     margin-bottom: 0.5rem;
     background: linear-gradient(90deg, #3b82f6, #8b5cf6);
@@ -39,7 +42,7 @@ body {
 
 .subtitle {
     color: var(--text-muted);
-    font-size: 0.95rem;
+    font-size: 1rem;
     margin-bottom: 3rem;
 }
 
@@ -51,6 +54,11 @@ body {
     padding: 3rem 2rem;
     transition: all 0.3s ease;
     cursor: pointer;
+
+    /* --- MUDANÇA 2: TRAVAR LARGURA DO UPLOAD --- */
+    /* Como o container agora é gigante, travamos o upload para ficar elegante no meio */
+    max-width: 600px;
+    margin: 0 auto 2rem auto; 
 }
 
 .upload-card:hover, .upload-card.dragover {
@@ -85,6 +93,10 @@ body {
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
     border: 1px solid #334155;
     animation: fadeIn 0.5s ease-out;
+    
+    /* Garante que o card use todo o espaço disponível */
+    width: 100%;
+    box-sizing: border-box;
 }
 
 @keyframes fadeIn {
@@ -97,17 +109,29 @@ body {
     display: flex;
     justify-content: space-around;
     background: rgba(0,0,0,0.2);
-    padding: 1rem;
+    padding: 1.5rem;
     border-radius: 12px;
     margin: 2rem 0;
+    
+    /* Melhoria para Mobile */
+    flex-wrap: wrap; 
+    gap: 20px;
 }
 
-.metric { display: flex; flex-direction: column; gap: 5px; }
-.metric .label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-.metric .value { font-size: 1.8rem; font-weight: 700; }
+.metric { display: flex; flex-direction: column; gap: 5px; min-width: 140px; }
+.metric .label { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+.metric .value { font-size: 2rem; font-weight: 700; }
 
 /* Visualizador de Distância */
-.distance-visualizer { margin-top: 2rem; text-align: left; }
+.distance-visualizer { 
+    margin-top: 2rem; 
+    text-align: left;
+    
+    /* Centraliza a barra visualmente em telas grandes */
+    max-width: 800px; 
+    margin-left: auto; 
+    margin-right: auto;
+}
 .labels { display: flex; justify-content: space-between; margin-bottom: 0.8rem; font-size: 0.9rem; font-weight: 600;}
 
 .bar-container {
@@ -141,29 +165,46 @@ body {
 
 .explanation {
     margin-top: 1.5rem;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: var(--text-muted);
     text-align: center;
-    line-height: 1.5;
+    line-height: 1.6;
+    max-width: 700px;
+    margin-left: auto; 
+    margin-right: auto;
 }
 
 .btn-secondary {
     background: transparent;
     border: 1px solid var(--text-muted);
     color: var(--text-muted);
-    padding: 8px 16px;
+    padding: 10px 24px;
     border-radius: 6px;
-    margin-top: 1.5rem;
+    margin-top: 2.5rem;
     cursor: pointer;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
+    transition: all 0.2s;
 }
-.btn-secondary:hover { border-color: var(--text-main); color: var(--text-main); }
+.btn-secondary:hover { 
+    border-color: var(--text-main); 
+    color: var(--text-main);
+    background: rgba(255,255,255,0.05);
+}
 
-.loading .bar-marker {
-    display: none;
-}
+.loading .bar-marker { display: none; }
 
 .loading .bar-fill {
     transition: width 0.2s ease;
     background: #10b981;
+}
+
+/* Responsividade para Celular */
+@media (max-width: 768px) {
+    .container { padding: 0.5rem; }
+    .metrics-grid { flex-direction: column; }
+    .logo { font-size: 2rem; }
+    .result-card { padding: 1.5rem; }
+    
+    /* No celular, a barra de distância usa 100% da tela */
+    .distance-visualizer { max-width: 100%; }
 }
