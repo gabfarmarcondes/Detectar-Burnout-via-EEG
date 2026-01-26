@@ -208,3 +208,145 @@ body {
     /* No celular, a barra de distância usa 100% da tela */
     .distance-visualizer { max-width: 100%; }
 }
+
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(15, 23, 42, 0.9); /* Fundo semi-transparente */
+    backdrop-filter: blur(10px); /* Efeito de vidro */
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    box-sizing: border-box;
+}
+
+.nav-logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-decoration: none;
+}
+
+.nav-links {
+    display: flex;
+    gap: 20px;
+}
+
+.nav-item {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: color 0.3s;
+}
+
+.nav-item:hover, .nav-item.active {
+    color: var(--primary);
+}
+
+/* --- ESTILOS DA HOME (LANDING PAGE) --- */
+.hero-section {
+    text-align: center;
+    max-width: 800px;
+    margin-top: 60px; /* Espaço para a navbar */
+}
+
+.hero-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+}
+
+.hero-text {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    margin-bottom: 2.5rem;
+    line-height: 1.6;
+}
+
+.btn-lg {
+    padding: 15px 40px;
+    font-size: 1.2rem;
+    border-radius: 50px; /* Botão arredondado */
+}
+
+/* --- ESTILOS SOBRE MIM --- */
+.profile-container {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    text-align: left;
+    background: var(--card-color);
+    padding: 40px;
+    border-radius: 20px;
+    border: 1px solid #334155;
+}
+
+.profile-img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--primary);
+}
+
+.social-links {
+    margin-top: 20px;
+    display: flex;
+    gap: 15px;
+}
+
+.social-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.05);
+    color: var(--text-main);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: background 0.3s;
+}
+.social-btn:hover { background: var(--primary); }
+
+/* Ajuste Responsivo */
+@media (max-width: 768px) {
+    .profile-container { flex-direction: column; text-align: center; }
+    .hero-title { font-size: 2.5rem; }
+}
+
+.github-float {
+    position: fixed;      /* Fixa na tela */
+    bottom: 30px;         /* 30px do fundo */
+    right: 30px;           /* 30px da esquerda */
+    z-index: 1000;        
+    
+    width: 55px;          /* Tamanho do botão */
+    height: 55px;
+    border-radius: 50%;   /* Redondo */
+    
+    background-color: var(--card-color);
+    border: 1px solid #334155;
+    color: var(--text-muted);
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5); 
+    transition: all 0.3s ease;
+}
+
+.github-float:hover {
+    color: white;
+    background-color: #24292e; /* Cor do GitHub */
+    border-color: var(--text-main);
+    transform: scale(1.1) rotate(10deg);
+    cursor: pointer;
+}
