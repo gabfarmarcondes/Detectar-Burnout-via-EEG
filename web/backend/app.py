@@ -4,6 +4,9 @@ import sys
 import os
 import tempfile
 
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
 # Diretório atual
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -49,10 +52,24 @@ app.add_middleware(
 
 # Rotas
 @app.get("/")
-def home():
-    # Rota de verificação da saúde da API.
-    model_status = "Online" if burnout_system.is_ready else "Offline"
-    return {"status": "API running", "model_status": model_status}
+async def home():
+    return FileResponse('web/frontend/home.html')
+
+@app.get("/analysis")
+async def read_analysis():
+    return FileResponse('web/frontend/analysis.html')
+
+@app.get("/aboutme")
+async def aboutme():
+    return FileResponse('web/frontend/aboutme.html')
+
+@app.get("/script.js")
+async def read_js():
+    return FileResponse('web/frontend/script.js')
+
+@app.get("/style.css")
+async def read_css():
+    return FileResponse('web/frontend/style.css')
 
 @app.post("/predict")
 async def predict(file : UploadFile = File(...)): # File(...) significa obrigatório (Ellipsis). No caso, é obrigatório mandar algum arquivo. Caso contrário, dá erro.
@@ -79,7 +96,6 @@ async def predict(file : UploadFile = File(...)): # File(...) significa obrigat�
             "details": result,
             "message": "Prototype analysis completed."
         }
-    
     except Exception as e:
         import traceback
         traceback.print_exc()
