@@ -7,10 +7,10 @@ Detecção de Burnout em Tempo Real usando Few-Shot Learning com uma Camada de I
 ### Fluxo de Processamento de Dados
 ```mermaid
 graph TD
-    A[Sinal EEG Bruto] --> B[Tensor 3D<br>(1 Amostra)]
-    B --> C{DataLoader}
-    C --> D[Tensor 4D<br>(Batch de 32 Amostras)]
-    D --> E[Rede Neural<br>(Processamento Paralelo)]]
+    A["Sinal EEG Bruto"] --> B["Tensor 3D<br>(1 Amostra)"]
+    B --> C{"DataLoader"}
+    C --> D["Tensor 4D<br>(Batch de 32 Amostras)"]
+    D --> E["Rede Neural<br>(Processamento Paralelo)"]
 ```
 
 ## Arquitetura da Aplicação Web
@@ -215,17 +215,19 @@ Em seguida, abra o arquivo `web/frontend/index.html` no seu navegador.
 
 ### **1. Dashboard de Diagnóstico**
 A interface web permite o upload de arquivos EEG e exibe o diagnóstico em tempo real, integrando três visões críticas: Geométrica (PCA), Temporal (XAI) e Espacial (Topomap)
-![alt text](image-2.png)
+
+![alt text](results/figures/image-2.png)
 
 ### **2. Explicabilidde (XAI)**
 Utilizando Grad-CAM, o modelo destaca no espectograma quais frequências e momentos temporais foram decisivos para o diagnóstico.
-![alt text](image-1.png)
+![alt text](results/figures/image-1.png)
 
 **Interpretação:** As manchas vermelhas concentradas na faixa central (13-30Hz) indicam que a IA identificou padrões de ondas Beta (estresse/ansiedade) como determinantes para o diagnóstico de Burnout.
 
 ### **3. Análise Espacial (Topomap)**
 Mapa topográfico da cabeça focado na onda Beta. Áreas em vermelho indicam hiperatividade cortical associada a sobrecarga cognitiva.
-![alt text](image.png)
+![alt text](results/figures/image.png)
+
 
 
 # Estudos e Validação Técnica
