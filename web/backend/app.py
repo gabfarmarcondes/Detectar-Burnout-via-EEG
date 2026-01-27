@@ -71,6 +71,10 @@ async def read_js():
 async def read_css():
     return FileResponse('web/frontend/style.css')
 
+@app.get("/how-it-works")
+async def how_it_works():
+    return FileResponse('web/frontend/how_it_works.html')
+
 @app.post("/predict")
 async def predict(file : UploadFile = File(...)): # File(...) significa obrigatório (Ellipsis). No caso, é obrigatório mandar algum arquivo. Caso contrário, dá erro.
     # Verificação de segurança
