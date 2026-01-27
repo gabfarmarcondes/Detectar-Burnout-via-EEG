@@ -1,101 +1,150 @@
-const API_URL = "http://127.0.0.1:8000/predict";
+const API_URL = "/predict";
 
-const dropZone = document.getElementById('drop-zone');
-const fileInput = document.getElementById('file-input');
-const resultCard = document.getElementById('result-card');
-const resultTitle = document.getElementById('result-title');
-const distBarFill = document.getElementById('dist-bar');
-const visualizer = document.querySelector('.distance-visualizer');
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("App Loaded");
 
+    const dropZone = document.getElementById('drop-zone');
 
-// Previne que o computador abra o arquivo
-['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    dropZone.addEventListener(eventName, preventDefault, false);
-})
+    if (dropZone) {
+        const fileInput = document.getElementById('file-input');
 
-function preventDefault(e){
-    e.preventDefault();
-    e.stopPropagation();
-}
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefault, false);
+        });
 
-// Efeitos visuais quando arrasta por cima
-['dragenter', 'dragover'].forEach(eventName => {
-    dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
-});
+        function preventDefault(e){
+            e.preventDefault();
+            e.stopPropagation();
+        }
 
-['dragleave', 'drop'].forEach(eventName => {
-    dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
-});
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+        });
 
-// Soltar o arquivo
-dropZone.addEventListener('drop', handleDrop, false);
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+        });
 
-function handleDrop(e){
-    e.preventDefault();
-    e.stopPropagation();
+        dropZone.addEventListener('drop', handleDrop, false);
+        fileInput.addEventListener('change', function() { handleFiles(this.files); });
 
-    const dt = e.dataTransfer;
-    const files = dt.files;
-    handleFiles(files);
-}
+        function handleDrop(e){
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
 
-fileInput.addEventListener('change', function() {
-    handleFiles(this.files);
-});
-
-function handleFiles(files){
-    if (files.length > 0) {
-        const file = files[0];
-        if (file.name.endsWith('.txt')) {
-            uploadFile(file);
-        } else {
-            alert("Please upload a valid .txt file from OpenBCI/STEW.");
+        function handleFiles(files){
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.name.endsWith('.txt')) {
+                    uploadFile(file);
+                } else {
+                    alert("Please upload a valid .txt file from OpenBCI/STEW.");
+                }
+            }
         }
     }
-}
+
+const cards = document.querySelectorAll('.card');
+
+    if (cards.length > 0) {
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        let currentIndex = 0;
+
+        // Função para atualizar as classes com lógica Coverflow
+        function updateCarousel() {
+            cards.forEach((card, index) => {
+                // Remove todas as classes de estado
+                card.classList.remove('active', 'prev', 'next', 'hidden-left', 'hidden-right');
+                
+                // Calcula a distância do card atual para o índice central
+                let distance = index - currentIndex;
+                
+                // Ajusta para lógica circular (ex: se tiver 6 cards, o último é -1 do primeiro)
+                if (distance > cards.length / 2) distance -= cards.length;
+                if (distance < -cards.length / 2) distance += cards.length;
+
+                // Aplica as classes baseadas na distância
+                if (distance === 0) {
+                    card.classList.add('active');
+                } else if (distance === 1) {
+                    card.classList.add('next');
+                } else if (distance === -1) {
+                    card.classList.add('prev');
+                } else if (distance > 1) {
+                    card.classList.add('hidden-right');
+                } else if (distance < -1) {
+                    card.classList.add('hidden-left');
+                }
+            });
+        }
+
+        // Funções de Navegação
+        const goNext = () => {
+            currentIndex = (currentIndex + 1) % cards.length;
+            updateCarousel();
+        };
+
+        const goPrev = () => {
+            currentIndex = (currentIndex - 1 + cards.length) % cards.length;
+            updateCarousel();
+        };
+
+        // Event Listeners dos Botões
+        if (nextBtn) nextBtn.addEventListener('click', goNext);
+        if (prevBtn) prevBtn.addEventListener('click', goPrev);
+
+        // Clique nos próprios cards (Prev/Next) para navegar
+        cards.forEach((card, index) => {
+            card.addEventListener('click', () => {
+                let distance = index - currentIndex;
+                if (distance > cards.length / 2) distance -= cards.length;
+                if (distance < -cards.length / 2) distance += cards.length;
+
+                if (distance === 1) goNext();
+                if (distance === -1) goPrev();
+            });
+        });
+
+        // Inicializa
+        updateCarousel();
+    }
+});
 
 async function uploadFile(file) {
-    
-    // 1. Prepara a tela
+    const resultCard = document.getElementById('result-card');
+    const resultTitle = document.getElementById('result-title');
+    const distBarFill = document.getElementById('dist-bar');
+    const visualizer = document.querySelector('.distance-visualizer');
+
     resultCard.classList.remove('hidden');
     resultCard.scrollIntoView({behavior: 'smooth'});
     visualizer.classList.add('loading');
-    
     resultTitle.style.color = "#94a3b8";
-    
-    // 2. Configura a Barra de Progresso
+
     let progress = 0;
     distBarFill.style.width = "0%";
     distBarFill.style.transition = "width 0.2s linear";
     
     const progressInterval = setInterval(() => {
         let increment;
-
-        if (progress < 20) {
-            increment = Math.random() * 0.8; 
-        } 
-        else if (progress < 50) {
-            increment = Math.random() * 0.3; 
-        } 
-        else {
-            increment = Math.random() * 0.1; 
-        }
+        if (progress < 20) increment = Math.random() * 0.8; 
+        else if (progress < 50) increment = Math.random() * 0.3; 
+        else increment = Math.random() * 0.1; 
 
         progress += increment;
-        
         if (progress > 90) progress = 90;
         
         distBarFill.style.width = `${progress}%`;
         resultTitle.innerText = `Processing... ${Math.round(progress)}%`;
-
     }, 100);
 
-    // 4. Envio Real para a API
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-        // Aguarda o Python
         const response = await fetch(API_URL, {
             method: 'POST',
             body: formData
@@ -104,18 +153,16 @@ async function uploadFile(file) {
         if (!response.ok) throw new Error("API ERROR");
 
         const data = await response.json();
+
+        clearInterval(progressInterval);
         
-        // 5. Finalização (O Grand Finale)
-        clearInterval(progressInterval); // Para o loop falso
-        
-        // Força ir para 100% visualmente
         distBarFill.style.transition = "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)";
         distBarFill.style.width = "100%";
         resultTitle.innerText = "Finalizing Analysis... 100%";
+        
         setTimeout(() => {
             visualizer.classList.remove('loading');
             distBarFill.style.background = "";
-
             displayResults(data);
         }, 1200); 
 
@@ -129,7 +176,6 @@ async function uploadFile(file) {
 }
 
 function displayResults(data){
-    // Elementos do HTML
     const resultCard = document.getElementById('result-card');
     const resultTitle = document.getElementById('result-title');
     const confValue = document.getElementById('confidence-value');
@@ -141,65 +187,26 @@ function displayResults(data){
     const windows = data.details.windows_analyzed;
 
     resultCard.classList.remove('hidden');
-
-    resultCard.scrollIntoView({behavior: 'smooth'});
-
     const isBurnout = prediction === "Burnout";
-    const color = isBurnout ? "#ef4444" : "#10b981";
-    const text = isBurnout ? "Burnout Detected" : "Relaxed State"
-
-    resultTitle.innerText = text;
-    resultTitle.style.color = color;
+    resultTitle.innerText = isBurnout ? "Burnout Detected" : "Relaxed State";
+    resultTitle.style.color = isBurnout ? "#ef4444" : "#10b981";
 
     confValue.innerText = confidence;
     winValue.innerText = windows;
 
-    let rawConfidence = confidence.replace(/[^0-9.]/g, ''); 
-    let percent = parseFloat(rawConfidence);
-
-    let position = 50; 
-    if (prediction === "Burnout") {
-        // Ex: 50 + (90 / 2) = 95% (Direita)
-        position = 50 + (percent / 2.2); // Dividi por 2.2 pra não colar na borda
-    } else {
-        // Ex: 50 - (90 / 2) = 5% (Esquerda)
-        position = 50 - (percent / 2.2);
-    }
-
-    // Trava limites (Segurança)
+    let percent = parseFloat(confidence.replace(/[^0-9.]/g, ''));
+    let position = prediction === "Burnout" ? 50 + (percent / 2.2) : 50 - (percent / 2.2);
     position = Math.max(2, Math.min(position, 98));
-
-    // Aplica
     distMarker.style.left = `${position}%`;
 
-    const plotContainer = document.getElementById('spatial-plot-container');
-    const plotImg = document.getElementById('spatial-plot-img');
-    const imageSource = data.image_base64 || (data.details && data.details.image_base64);
+    const setImg = (id, containerId, source) => {
+        if (source) {
+            document.getElementById(id).src = "data:image/png;base64," + source;
+            document.getElementById(containerId).classList.remove('hidden');
+        }
+    };
 
-    if (imageSource) {
-        plotImg.src = "data:image/png;base64," + imageSource;
-        plotContainer.classList.remove('hidden');
-    } else {
-        console.warn("image_base64 not found in JSON:", data);
-    }
-
-    const xaiContainer = document.getElementById('xai-container');
-    const xaiImg = document.getElementById('xai-img');
-
-    // Tenta pegar da raiz ou details
-    const xaiSource = data.xai_base64 || (data.details && data.details.xai_base64);
-
-    if (xaiSource) {
-        xaiImg.src = "data:image/png;base64," + xaiSource;
-        xaiContainer.classList.remove('hidden');
-    }
-
-    const topoContainer = document.getElementById('topomap-container');
-    const topoImg = document.getElementById('topomap-img');
-    const topoSource = data.topomap_base64 || (data.details && data.details.topomap_base64);
-
-    if (topoSource) {
-        topoImg.src = "data:image/png;base64," + topoSource;
-        topoContainer.classList.remove('hidden');
-    }
+    setImg('spatial-plot-img', 'spatial-plot-container', data.image_base64 || data.details?.image_base64);
+    setImg('xai-img', 'xai-container', data.xai_base64 || data.details?.xai_base64);
+    setImg('topomap-img', 'topomap-container', data.topomap_base64 || data.details?.topomap_base64);
 }
