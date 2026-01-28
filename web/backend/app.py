@@ -41,6 +41,8 @@ async def lifespan(app: FastAPI):
 # Ponto principal da interação para criar toda a API do projeto
 app = FastAPI(title="NeuroCompute API", lifespan=lifespan)
 
+app.mount("/static", StaticFiles(directory="web/frontend"), name="static")
+
 # Configurar o CORS
 app.add_middleware(
     CORSMiddleware,
@@ -74,6 +76,10 @@ async def read_css():
 @app.get("/how-it-works")
 async def how_it_works():
     return FileResponse('web/frontend/how_it_works.html')
+
+@app.get("/studies")
+async def studies():
+    return FileResponse('web/frontend/studies.html')
 
 @app.post("/predict")
 async def predict(file : UploadFile = File(...)): # File(...) significa obrigatório (Ellipsis). No caso, é obrigatório mandar algum arquivo. Caso contrário, dá erro.
