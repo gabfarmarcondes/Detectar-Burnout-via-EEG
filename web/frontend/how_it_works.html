@@ -31,87 +31,85 @@
         <div class="carousel-wrapper">
             <button id="prev-btn" class="nav-btn">❮</button>
             
-            <div class="card-stack">
+        <div class="card-stack">
                 
                 <div class="card">
                     <div class="card-number">1</div>
                     <div class="card-icon">📡</div>
-                    <h3>Raw Data Acquisition</h3>
+                    <h3>1. Data Acquisition</h3>
                     <p>
-                        The process begins by capturing bioelectrical activity using a 14-channel EEG headset (Emotiv/OpenBCI). 
-                        The sensors record micro-voltage fluctuations on the scalp resulting from ionic current within the brain's neurons.
+                        The process begins with an EEG headset using 14 sensors placed gently on the scalp. 
+                        These sensors detect the natural electrical activity produced by your neurons communicating. 
+                        This biological information is immediately converted into digital data that our system can process.
                     </p>
                     <div class="diagram-box">
-                        <span>Scalp</span> ➝ <span>Analog Signal</span> ➝ <span>128Hz Digital</span>
+                        <span>🧠 Brain Activity</span> ➝ <span>⚡ Sensors</span> ➝ <span>🔢 Digital Input</span>
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-number">2</div>
                     <div class="card-icon">🧹</div>
-                    <h3>Signal Preprocessing</h3>
+                    <h3>2. Preprocessing (Filtering)</h3>
                     <p>
-                        Raw EEG is noisy. We apply a <strong>Band-Pass Filter (1-40Hz)</strong> to isolate relevant brainwaves (Alpha, Beta, Theta) 
-                        and remove artifacts like muscle movement (EMG) or power line interference (60Hz).
+                        Raw EEG data often contains "noise" from muscle movement, blinking, or nearby electronics. 
+                        We apply a specific filter (1-40Hz) to remove these distractions, keeping only the clear brainwaves—Delta, Theta, Alpha, and Beta—that are essential for assessing mental fatigue.
                     </p>
                     <div class="diagram-box">
-                        <span>Raw</span> ➝ <span>Filter(1-40Hz)</span> ➝ <span>Clean Signal</span>
+                        <span>〰️ Noisy Signal</span> ➝ <span>🎛️ Noise Removal</span> ➝ <span>📉 Clean Waves</span>
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-number">3</div>
                     <div class="card-icon">🧊</div>
-                    <h3>Tensor Construction</h3>
+                    <h3>3. Data Structuring</h3>
                     <p>
-                        The clean signal is sliced into 4-second windows and transformed into a 3D Tensor. 
-                        This multi-dimensional matrix represents <strong>Channels × Frequency × Time</strong>, 
-                        allowing the AI to analyze spatial and spectral features simultaneously.
+                        To help the AI analyze the continuous stream of brain activity, we organize the data into 4-second segments.
+                        These segments are structured into a 3D format that captures three layers of information at once: 
+                        where in the brain activity is happening, what frequencies are active, and how they change over time.
                     </p>
                     <div class="diagram-box">
-                        <span>Input Shape: [14, 33, 17]</span>
+                        <span>Channels</span> × <span>Frequency</span> × <span>Time</span>
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-number">4</div>
                     <div class="card-icon">💎</div>
-                    <h3>Feature Embedding</h3>
+                    <h3>4. Feature Extraction</h3>
                     <p>
-                        A <strong>Siamese Neural Network</strong> processes the tensor. Instead of classifying directly, 
-                        it maps the input into a high-dimensional vector space called an "Embedding". 
-                        This vector is the unique mathematical fingerprint of the patient's mental state.
+                        Our neural network processes this complex data to extract the most meaningful patterns. 
+                        It compresses the information into a concise summary vector. This step is crucial because it isolates the specific patterns of the strong>mental state itself, ensuring the analysis focuses on the condition rather than the individual's unique biological traits.
                     </p>
                     <div class="diagram-box">
-                        <span>Tensor</span> ➝ <span>CNN Encoder</span> ➝ <span>Vector</span>
+                        <span>🧊 Raw Data</span> ➝ <span>🤖 Analysis</span> ➝ <span>🆔 State Vector</span>
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-number">5</div>
                     <div class="card-icon">📏</div>
-                    <h3>Few-Shot Comparison</h3>
+                    <h3>5. Comparative Diagnosis</h3>
                     <p>
-                        Using <strong>Prototypical Networks</strong>, the system calculates the Euclidean Distance 
-                        between the new patient's embedding and the learned "Prototypes" (centroids) of 
-                        Relaxed vs. Burnout classes derived from the training set.
+                        Rather than needing thousands of examples to learn, our system compares the new patient's data directly to established reference profiles (prototypes) of "Relaxed" and "Burnout" states. 
+                        It measures how mathematically similar the new data is to these references and classifies the condition based on proximity.
                     </p>
                     <div class="diagram-box">
-                        <span>d(x, Prototype_A)</span> vs <span>d(x, Prototype_B)</span>
+                        <span>📍 Patient Data</span> ↔️ <span>Reference Profiles</span>
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-number">6</div>
                     <div class="card-icon">🧠</div>
-                    <h3>XAI & Diagnosis</h3>
+                    <h3>6. Transparent Results (XAI)</h3>
                     <p>
-                        The final diagnosis is based on the nearest prototype. 
-                        Simultaneously, <strong>Grad-CAM</strong> generates a heatmap (Explainable AI), 
-                        highlighting exactly which brain regions and frequencies (e.g., Beta waves in Frontal Lobe) triggered the decision.
+                        Trust is key in medical AI. Instead of just providing a diagnosis, our system uses Explainable AI to generate a visual heatmap. 
+                        This map shows doctors exactly which brain regions and wave patterns influenced the decision, allowing for a transparent and verifiable diagnosis.
                     </p>
                     <div class="diagram-box">
-                        <span>Output: Burnout (98%) + Heatmap</span>
+                        <span>✅ Result</span> + <span>🔥 Visual Evidence</span>
                     </div>
                 </div>
 
