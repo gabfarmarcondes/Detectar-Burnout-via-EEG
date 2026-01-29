@@ -115,7 +115,30 @@ eeg-Burnout-fewshot/
 ```
 > Para baixar as dependências do projeto: **pip install -r requirements.txt**
 
-# Instalação e Configuração
+# 🐳 Quick Start com Docker (Recomendado)
+A maneira mais simples e robusta de rodar a **Aplicação Web** (Frontend + Backend) sem se preocupar com versões do Python ou dependências do sistema.
+
+## Pré-requisitos
+* [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado e rodando.
+
+### Passo a Passo
+
+1. **Clone o repositório:**
+   ```bash
+   git clone [https://github.com/gabfarmarcondes/eeg-Burnout-fewshot.git](https://github.com/gabfarmarcondes/eeg-Burnout-fewshot.git)
+   cd eeg-Burnout-fewshot
+   ```
+2. **Suba a aplicação:** Executando o seguinte comando no terminal:
+   ```bash
+   docker compose up --build
+   ```
+O Docker irá baixar a imagem do Python, instalar as depências do `requirements.txt`, configurar o servidor gráfico e iniciar o FastAPI.
+
+3. **Acessar:** Abra o navegador em [Link da Aplicação](http://localhost:8000)
+> Para parar a aplicação, pressione `Ctrl + C` no terminal.
+> Para remover os containers, use `docker compose down`.
+
+# Instalação e Configuração (Método Manual)
 
 Recomenda-se o uso de um ambiente virtual (venv) para isolar as dependências.
 

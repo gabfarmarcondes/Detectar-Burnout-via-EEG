@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  neurocompute:
+    build: .
+    container_name: neurocompute_app
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mapeia a pasta atual para /app no container (Hot Reload)
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
