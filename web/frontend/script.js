@@ -96,6 +96,15 @@ const cards = document.querySelectorAll('.card');
         if (nextBtn) nextBtn.addEventListener('click', goNext);
         if (prevBtn) prevBtn.addEventListener('click', goPrev);
 
+        document.addEventListener('keydown', (e) => {
+            if (e.key === "ArrowLeft") {
+                goPrev();
+            }
+            else if (e.key === "ArrowRight") {
+                goNext();
+            }
+        });
+
         // Clique nos próprios cards (Prev/Next) para navegar
         cards.forEach((card, index) => {
             card.addEventListener('click', () => {
