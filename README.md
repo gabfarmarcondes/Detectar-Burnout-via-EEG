@@ -43,7 +43,7 @@ O dado de cada indivíduo segue a convenção subNum_task.txt.
 Para processar os sinais cerebrais (EEG) de forma eficiente, este projeto utiliza estruturas de dados específicas do **Pytorch**. Abaixo está explicado como os dados são organizados na memória.
 
 1. **Tensor**
-Na matemática e na computação, um **Tensor** é uma generalização de matrizes para múltiplas dimensões de um único tipo. ALgumas características do **Tensor**:
+Na matemática e na computação, um **Tensor** é uma generalização de matrizes para múltiplas dimensões de um único tipo. Algumas características do **Tensor**:
 * É a estrutura de dados padrão para Deep Learning porque permite operações matemáticas em paralelo na GPU.
 * Possui suporte integrado para GPUs habilitadas da NVIDIA-CUDA, habilitando, significantemente, speedups para grandes computações
 * Integração de automação de cálculo de gradientes via ```autograd``` do Pytorch, essencial para treinamento de redes neurais.
