@@ -1,154 +1,154 @@
-# Detecção de Burnout via EEG: Uma Abordagem Independente de Sujeito com Aprendizado Few-Shot e Explicabilidade (XAI)
+# Burnout Detection via EEG: A Subject-Independent Approach with Few-Shot Learning and Explainability (XAI)
 
-Detecção de Burnout em Tempo Real usando Few-Shot Learning com uma Camada de Interpretabilidade (XAI) gerando um mapa de calor do cérebro indicando o porquê da decisão. O projeto utiliza Subject-Independent Classification com Transfer Learning para validação em indivíduos de outros datasets..
+Real-Time Burnout Detection using Few-Shot Learning with an Interpretability Layer (XAI) generating a brain heatmap indicating the reasoning behind the decision. The project utilizes Subject-Independent Classification with Transfer Learning for validation on individuals from other datasets.
 
-## Arquitetura do Sistema
+## System Architecture
 
-### Fluxo de Processamento de Dados
+### Data Processing Flow
 ```mermaid
 graph TD
-    A["Sinal EEG Bruto"] --> B["Tensor 3D<br>(1 Amostra)"]
+    A["Raw EEG Signal"] --> B["3D Tensor<br>(1 Sample)"]
     B --> C{"DataLoader"}
-    C --> D["Tensor 4D<br>(Batch de 32 Amostras)"]
-    D --> E["Rede Neural<br>(Processamento Paralelo)"]
+    C --> D["4D Tensor<br>(Batch of 32 Samples)"]
+    D --> E["Neural Network<br>(Parallel Processing)"]
 ```
 
-## Arquitetura da Aplicação Web
+## Web Application Architecture
 ```mermaid
 graph LR
     A[Frontend HTML/JS] -- Upload .txt --> B[FastAPI Backend]
-    B -- Processamento --> C[PyTorch Model]
-    C -- Inferência --> B
-    B -- JSON (Diagnóstico + Base64 Imagens) --> A
+    B -- Processing --> C[PyTorch Model]
+    C -- Inference --> B
+    B -- JSON (diagnosis + Base64 Images) --> A
 ```
 
 # Dataset
 
-[Link do Dataset Usado](https://ieee-dataport.org/open-access/stew-simultaneous-task-eeg-workload-dataset)
+[Link to the Dataset Used](https://ieee-dataport.org/open-access/stew-simultaneous-task-eeg-workload-dataset)
 
-## Resumo do Dataset
-É um dataset que contém dados de 48 participantes que estavam em uma carga de trabalho excessivo utilizando o SIMKAP (Vienna Test System: SIMKAP (Simultaneous Capacity/Multi-Tasking). A atividade cerebral foi registrada antes (repouso) e durante o teste.
-* **Equipamento:** Emotiv (14 canais).
-* **Frequência:** 128Hz.
-* **Duração:** 2.5 minutos por estágio.
-* **Avaliação Subjetiva:** Escala de 1 a 9 (registrada em rating.txt).
+## Dataset Summary
+It is a dataset containing data from 48 participants who were under excessive workload using SIMKAP (Vienna Test System: SIMKAP - Simultaneous Capacity/Multi-Tasking). Brain activity was recorded before (rest) and during the test.
 
-## Instrução do Dataset
-O dado de cada indivíduo segue a convenção subNum_task.txt.
-* sub01_lo.txt: EEG do indivíduo 1 em descanso (Low Workload).
-* sub23_hi.txt: EEG do indivíduo 23 em atividade (High Workload/Burnout).
-* **Canais:** AF3, F7, F3, FC5, T7, P7, O1, O2, P8, T8, FC6, F4, F8, AF4.
+* **Equipment:** Emotiv (14 channels).
+* **Frequency:** 128Hz.
+* **Duration:** 2.5 minutes per stage.
+* **Subjective Rating:** Scale from 1 to 9 (recorded in rating.txt).
 
-### Conceitos Fundamentais para Entendimento do Projeto
-Para processar os sinais cerebrais (EEG) de forma eficiente, este projeto utiliza estruturas de dados específicas do **Pytorch**. Abaixo está explicado como os dados são organizados na memória.
+## Dataset Instruction
+Each individual's data follows the convention subNum_task.txt.
+* sub01_lo.txt: EEG of individual 1 at rest (Low Workload).
+* sub23_hi.txt: EEG of individual 23 during activity (High Workload/Burnout).
+* **Channels:** AF3, F7, F3, FC5, T7, P7, O1, O2, P8, T8, FC6, F4, F8, AF4.
+
+### Fundamental Concepts for Project Understanding
+To process brain signals (EEG) efficiently, this project uses specific **PyTorch** data structures. Below is an explanation of how data is organized in memory.
 
 1. **Tensor**
-Na matemática e na computação, um **Tensor** é uma generalização de matrizes para múltiplas dimensões de um único tipo. Algumas características do **Tensor**:
-* É a estrutura de dados padrão para Deep Learning porque permite operações matemáticas em paralelo na GPU.
-* Possui suporte integrado para GPUs habilitadas da NVIDIA-CUDA, habilitando, significantemente, speedups para grandes computações
-* Integração de automação de cálculo de gradientes via ```autograd``` do Pytorch, essencial para treinamento de redes neurais.
-* Gerenciamento de memória automática com garbage collection.
-* Muito similar com o NumPy, facilitando a conversão de dados.
-No contexto deste projeto, cada amostra de EEG de 4 segundos não é apenas uma lista de números, são matrizes de 3 dimensões:
-* **Shape (Formato) de uma amostra:** [14, 33, 17]:
-   * **14 Canais:** Os sensores físicos (eletrodos) na cabeça.
-   * **33 Frequências:** A decomposição do sinal (Alpha, Beta, Gamma, etc).
-   * **17 Janelas de Tempo:** Como o sinal muda ao longo daqueles 4 segundos.
+In mathematics and computing, a **Tensor** is a generalization of matrices to multiple dimensions operation on the GPU.
+* It is the standard data structure for Deep Learning because it enables parallel mathematical operations in the GPU.
+* It has built-in support for **NVIDIA-CUDA** enabled GPUs, significantly enabling speedups for large computing.
+* Integration of gradient calculation automation via PyTorch's `autograd`, essential for neural network training.
+* Automatic memory management with garbage collection;
+* Very similar to NumPy, facilitating data conversion. In the context of this project, each 4-second EEG sample is not just a list of numbers, they are 3-dimensional matrices:
+* **Shape of a sample:** [14, 33, 17]:
+   * **14 Channels:** The physical sensors (electrodes) on the head.
+   * **33 Frequencies:** The signal decomposition (Alpha, Beta, Gamma, etc).
+   * **17 Time Windows:** How the signal changes over those 4 seconds.
 
-2. **Batch (Lote):**
-O **Batch** é um agrupamento de várias amostras (tensores) para serem processadas simultaneamente pela Rede Neural. Em vez de a rede aprender com um paciente por vez, ela olha para um grupo, no caso, de 32 pacientes de uma vez só.
-* **Shape do Batch:** [32, 14, 33, 17].
-   * A primeira dimensão (32) representa a quantidade de amostras naquele agrupamento.
-Por que usar Batches:
-* **Estabilidade Estatística:** No aprendizado Few-Shot (_Prototypical Networks_), precisa-se de várias amostras para calcular uma média(protótipo) confiável da classe. Um único exemplo ruidoso poderia enganar a rede, mas a média de 32 exemplos cancela os ruídos.
-* **Eficiência de Hardware:** As GPUs são projetadas para multiplicar matrizes gigantes. Processar 32 exames juntos leva, praticamente, o mesmo tempo que processar 1, acelerando drasticamente o treinamento.
-* **Nível Arquitetural:** O código utiliza a função ```utils.get_prototypes```, que opera sobre o batch inteiro para transformar ele em conhecimento. O processo ocorre em três etapas:
-   1. **Filtragem (Masking):** O algoritmo separa os embeddings (vetores de características) em dois grupos: os que pertencem à classe "Relaxado" e os que pertencem à classe "Burnout".
-   2. **Cálculo da Média (Mean):** Para cada grupo, ele calcula a média artimética de todos os vetores. Esse vetor médio é chamado de protótipo.
-   3. **Empilhamento (Stacking):** A função retorna um novo tensor contendo apenas esses dois vetores ideais. É contra esses protótipos que a rede medirá as distâncias para aprender a classificar novos exemplos.
+2. **Batch:**
+The **Batch** is a grouping of multiple samples (tensors) to be processed simultaneously by the Neural Network. Instead of the network learning from one patient at a time, it looks at a group, in this case, 32 patients at once.
+* **Batch Shape:** [32, 14, 33, 17].
+   * The first dimension (32) represents the amount of samples in that group.
+Why we use Batches?:
+* **Statistical Stability:** In Few-Shot learning (Prototypical Networks), several samples are needed to calculate a reliable mean (prototype) of the class. A single noisy example could mislead the network, but the average of 32 examples cancels out the noise.
+* **Hardware Efficiency:** GPUs are designed to multiply giant matrices. Processing 32 exams together takes practically the same time as processing 1, drastically accelerating training.
+* **Architectural Level:** The code uses the `utils.get_prototypes` function, which operates on the entire batch to transform it into knowledge. The process occurs in three steps:
+   1. **Masking:** The algorithm separates the embeddings (feature vectors) into two groups: those belonging to the "Relaxed" class and those belonging to the "Burnout" class.
+   2. **Mean Calculation:** For each group, it calculates the arithmetic mean of all vectors. This mean vector is called a prototype.
+   3. **Stacking:** The function returns a new tensor containing only these two ideal vectors. It is against these prototypes that the network will measure distances to learn to classify new examples.
 
-# Estrutura do Projeto
+# Project Structure
 ```text
 eeg-Burnout-fewshot/
 │
-├── data/                        # ONDE FICAM OS DADOS
-│   ├── raw/                     # Dados originais intocados.
-│   ├── processed/               # Dados limpos e convertidos em tensores.
+├── data/                        # WHERE DATA IS STORED
+│   ├── raw/                     # Original untouched data.
+│   ├── processed/               # Cleaned data converted into tensors.
 │
-├── notebooks/                   # JUPYTER NOTEBOOKS (Para testes rápidos e exploração)
+├── notebooks/                   # JUPYTER NOTEBOOKS (For quick tests and exploration)
 │   ├── 01_data_exploration.ipynb
 │   ├── 02_preprocessing_test.ipynb
 │   └── 03_shap_visualization_demo.ipynb
 │
-├── src/                         # CÓDIGO FONTE OFICIAL
-│   ├── __init__.py              # Inicializador do pacote
-│   ├── config.py                # Variáveis globais (Canais, Frequências, Caminhos)
-│   ├── data_loader.py           # Scripts para carregar e transformar dados (Dataset Class do PyTorch)
-│   ├── inference.py             # Script para classificação de novos pacientes
-│   ├── make_mock_data.py        # Gerador de dados sintéticos para testes de fluxo
-│   ├── models.py                # Definição das classes das Redes Neurais (CNN, EEGEmbedding)
-│   ├── preprocessing.py         # Pipeline: Filtro de Banda -> Janelamento -> STFT
-│   ├── test_metrics.py          # Geração de Matriz de Confusão e Relatório de Acurácia
-│   ├── train_fewshot.py         # Script para o Fine-Tuning (Few-Shot Learning)
-│   └── utils.py                 # Funções auxiliares (salvar modelos, plotar gráficos de loss)
-│   ├── visualize_xai_utils.py   # Script executável para gerar e salvar imagens do XAI
-|   |── visualize_spatial.py     # Script para gerar o mapa topográfico
-│   ├── xai_utils.py             # Biblioteca de funções para Grad-CAM e visualização
+├── src/                         # OFFICIAL SOURCE CODE
+│   ├── __init__.py              # Package initializer
+│   ├── config.py                # Global variables (Channels, Frequencies, Paths)
+│   ├── data_loader.py           # Scripts to load and transform data (PyTorch Dataset Class)
+│   ├── inference.py             # Script for classifying new patients
+│   ├── make_mock_data.py        # Synthetic data generator for flow testing
+│   ├── models.py                # Definition of Neural Network classes (CNN, EEGEmbedding)
+│   ├── preprocessing.py         # Pipeline: Band Filter -> Windowing -> STFT
+│   ├── test_metrics.py          # Confusion Matrix Generation and Accuracy Report
+│   ├── train_fewshot.py         # Script for Fine-Tuning (Few-Shot Learning)
+│   └── utils.py                 # Helper functions (save models, plot loss graphs)
+│   ├── visualize_xai.py         # Executable script to generate and save XAI images
+|   |── visualize_spatial.py     # Script to generate the topographic map
+│   ├── xai_utils.py             # Library of functions for Grad-CAM and visualization
 │
-├── results/                     # SAÍDAS DO MODELO
-│   ├── saved_models/            # Pesos treinados (.pth)
-│   ├── figures/                 # Gráficos gerados (Matrizes, Heatmaps)
-│── ablation_study/              # Estudo de Treinamento da Rede Com e Sem o Filtro
-│   ├── run_batch.py             # Roda o train_fewshot.py 5 vezes e captura o Loss
-│   ├── plot_ablation.py         # Plota o Gráfico de Linha do Loss Com e Sem o Filtro
+├── results/                     # MODEL OUTPUTS
+│   ├── saved_models/            # Trained weights (.pth)
+│   ├── figures/                 # Generated graphs (Matrices, Heatmaps)
+│── ablation_study/              # Network Training Study With and Without Filter
+│   ├── run_batch.py             # Runs train_fewshot.py 5 times and captures Loss
+│   ├── plot_ablation.py         # Plots the Loss Line Graph With and Without Filter
 │
-├── web/                         # APLICAÇÃO WEB
+├── web/                         # WEB APPLICATION
 │   ├── backend/
-│   │   └── app.py               # API FastAPI
+│   │   └── app.py               # FastAPI API
 │   ├── frontend/
-│       ├── index.html           # Interface do Usuário
-│       ├── script.js            # Lógica do Dashboard
-│       └── style.css            # Estilização
+│       ├── index.html           # User Interface
+│       ├── script.js            # Dashboard Logic
+│       └── style.css            # Styling
 │
-├── README.md                    # Documentação do projeto
-└── requirements.txt             # Dependências do Python.
+├── README.md                    # Project documentation
+└── requirements.txt             # Python dependencies.
 ```
-> Para baixar as dependências do projeto: **pip install -r requirements.txt**
+> To download project dependencies: **pip install -r requirements.txt**
 
-# 🐳 Quick Start com Docker (Recomendado)
-A maneira mais simples e robusta de rodar a **Aplicação Web** (Frontend + Backend) sem se preocupar com versões do Python ou dependências do sistema.
+# 🐳 Quick Start with Docker (Recommended)
+The simplest and most robust way to run the Web Application (Frontend + Backend) without worrying about Python versions or system dependencies.
 
-## Pré-requisitos
-* [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado e rodando.
+## Prerequisites
+* [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
 
-### Passo a Passo
+### Step by Step
 
-1. **Clone o repositório:**
+1. **Clone the repository:**
    ```bash
    git clone [https://github.com/gabfarmarcondes/eeg-Burnout-fewshot.git](https://github.com/gabfarmarcondes/eeg-Burnout-fewshot.git)
    cd eeg-Burnout-fewshot
    ```
-2. **Suba a aplicação:** Executando o seguinte comando no terminal:
+2. **Start the application:** Execute the following command in the terminal:
    ```bash
    docker compose up --build
    ```
-O Docker irá baixar a imagem do Python, instalar as depências do `requirements.txt`, configurar o servidor gráfico e iniciar o FastAPI.
+Docker will download the Python image, install dependencies from `requirements.txt`, configure the graphics server, and start FastAPI.
 
-3. **Acessar:** Abra o navegador em [Link da Aplicação](http://localhost:8000)
-> Para parar a aplicação, pressione `Ctrl + C` no terminal.
-> Para remover os containers, use `docker compose down`.
+3. **Access:** Open your browser at [Application Link](http://localhost:8000)
+> To stop the application, press `Ctrl + C` in the terminal.
+> To remove the containers, use `docker compose down`.
 
-# Instalação e Configuração (Método Manual)
+# Installation and Configuration (Manual Method)
 
-Recomenda-se o uso de um ambiente virtual (venv) para isolar as dependências.
+It is recommended to use a virtual environment (venv) to isolate dependencies.
 
-1. Clone o Repositório:
+1. Clone the Repository:
 ```bash
 git clone https://github.com/gabfarmarcondes/eeg-Burnout-fewshot.git
 cd eeg-Burnout-fewshot
 ```
 
-2. Crie e ative o ambiente virtual:
+2. Create and activate the virtual environment:
 ```bash
 python3 -m venv venv
 source venv/bin/activate  # Linux/Mac
@@ -156,62 +156,54 @@ source venv/bin/activate  # Linux/Mac
 venv\Scripts\activate     # Windows
 ```
 
-3. Instale as dependências:
+3. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Preparação dos Dados: 
-Se não tiver o dataset real (STEW), gere dados sintéticos para teste:
+4. Data Preparation: If you do not have the real dataset (STEW), generate synthetic data for testing:
 ```bash
 python3 src/make_mock_data.py
 ```
-_Se tiver o dataset real, coloque os arquivos ```.txt``` em ```data/raw/```._
+_If you have the real dataset, place the `.txt` files in `data/raw/`._
 
-5. Pré-processamento:
-Limpa o sinal, aplica filtros de frequência e converte para Espectrogramas (Time-Frequency):
+5. Preprocessing: Cleans the signal, applies frequency filters, and converts to Spectrograms (Time-Frequency):
 ```bash
 python3 src/preprocessing.py
 ```
 
-6. Treinamento do Modelo:
-Treina a Rede Neural para aprender a métrica de distância entre Relaxado e Burnout:
+6. Model Training: Trains the Neural Network to learn the distance metric between Relaxed and Burnout:
 ```bash
 python3 src/train_fewshot.py
 ```
 
-7. Validação e Métricas:
-Gera a Matriz de Confusão e calcula a Acurácia em dados de teste (sujeitos não vistos):
+7. Validation and Metrics: Generates the Confusion Matrix and calculates Accuracy on test data (unseen subjects):
 ```bash
 python3 src/test_metrics.py
 ```
 
-8. Explicabilidade (XAI):
-Gera uma imagem visual mostrando onde a IA observou no cérebro para detectar o Burnout:
+8. Explainability (XAI): Generates a visual image showing where the AI looked in the brain to detect Burnout:
 ```bash
-python3 src/visualize_xai_utilis.py
+python3 src/visualize_xai.py
 ```
-_A imagem será salva na pasta ```results/```._
+_The image will be saved in the `results/` folder._
 
-9. Inferência (Simulação Real):
-Simula a chegada de um paciente desconhecido e realiza o diagnóstico:
+9. Inference (Real Simulation): Simulates the arrival of an unknown patient and performs the diagnosiss:
 ```bash
 python3 src/inference.py
 ```
 
-10. Visualização Espacial:
-Mostra o mapa da cabeça onde ocorreu o Burnout, que é identificado pela vermelhidão da área.
+10. Spatial Visualization: Shows the map of the head where Burnout occurred, which is identified by the redness of the area.
 ```bash
 python3 src/visualize_spatial.py
 ```
 
-11. Rodando o Estudo do Filtro:
-Foi estudado como a rede se comportaria com e sem o filtro passa-banda (1-40Hz). Para a execução do estudo:
-1. Execute:
+11. Running the Filter Study: A study was conducted on how the network behaves with and without the band-pass filter (1-40Hz). To execute the study:
+1. Run:
 ```bash
 python3 src/preprocessing.py
 ```
-2. Execute:
+2. Run:
 ```bash
 cd results/ablation_study
 ```
@@ -219,82 +211,78 @@ cd results/ablation_study
 ```bash
 python3 ablation_study/run_batch.py
 ```
-Irá capturar o Loss, com o filtro, 5 vezes no terminal, incluindo a média e o desvio padrão.
+It will capture the Loss, with the filter, 5 times in the terminal, including the mean and standard deviation
 
-12. Gráfico do Estudo:
-Foi plotado um gráfico do estudo para mostrar visualmente os dados obtidos.
+12. Study Graph: A graph of the study was plotted to visually show the obtained data.
 ```bash
 python3 ablation_study/plot_ablation.py
 ```
 
-13. Rodar a Aplicação Web:
-Para que seja possível rodar a aplicação web é preciso iniciar o servidor Backend:
+13. Running the Web Application: To run the web application, you need to start the Backend server:
 ```bash
 uvicorn web.backend.app:app --reload
 ```
-Em seguida, abra o arquivo `web/frontend/index.html` no seu navegador.
+Then, open the `web/frontend/index.html` file in your browser.
 
-# Resultado Esperado
+# Expected Result
 
-### **1. Dashboard de Diagnóstico**
-A interface web permite o upload de arquivos EEG e exibe o diagnóstico em tempo real, integrando três visões críticas: Geométrica (PCA), Temporal (XAI) e Espacial (Topomap)
+### **1. Diagnostic Dashboard**
+The web interface allows the upload of EEG files and displays the diagnosis in real-time, integrating three critical views: Geometric (PCA), Temporal (XAI), and Spatial (Topomap).
 
 ![alt text](results/figures/image-2.png)
 
-### **2. Explicabilidde (XAI)**
-Utilizando Grad-CAM, o modelo destaca no espectograma quais frequências e momentos temporais foram decisivos para o diagnóstico.
+### **2. Explainability (XAI)**
+Using Grad-CAM, the model highlights in the spectrogram which frequencies and temporal moments were decisive for the diagnosis
 ![alt text](results/figures/image-1.png)
 
-**Interpretação:** As manchas vermelhas concentradas na faixa central (13-30Hz) indicam que a IA identificou padrões de ondas Beta (estresse/ansiedade) como determinantes para o diagnóstico de Burnout.
+**Interpretation:** The red spots concentrated in the central band (13-30Hz) indicate that the AI identified Beta wave patterns (stress/anxiety) as determinants for the Burnout diagnosis.
 
-### **3. Análise Espacial (Topomap)**
-Mapa topográfico da cabeça focado na onda Beta. Áreas em vermelho indicam hiperatividade cortical associada a sobrecarga cognitiva.
+### **3. Spatial Analysis (Topomap)**
+Topographic map of the head focused on the Beta wave. Areas in red indicate cortical hyperactivity associated with cognitive overload.
 ![alt text](results/figures/image.png)
 
+# Studies and Technical Validation
 
-
-# Estudos e Validação Técnica
-
-## 1- Interpretação da Imagem da Matriz de Confusão: 
-A estrutura  é um quadrado dividido em 4 quadrantes:
-   ### 1.1. Eixo Vertical/Esquerdo:
-   O True Label. Representa o estado real do paciente.
-   * 0 = Relaxado.
+## 1- Interpretation of the Confusion Matrix Image:
+The structure is a square divided into 4 quadrants:
+   ### 1.1. Vertical/Left Axis:
+   O True Label. Represents the patient's actual state.
+   * 0 = Relaxed.
    * 1 = Burnout.
-   ### 1.2. Eixo Horizontal/Baixo:
-   Predicted Label. Representa o que a IA previu.
-   * 0 = IA disse que é Relaxado.
-   * 1 = IA disse que é Burnout.
-Portanto:
-* O quadrante superior esquerdo (0,0):
-   * O paciente estava relaxado.
-   * A IA disse que estava relaxado.
-   * Conclusão: A IA acertou o estado saudável.
-* O quadrante inferior direito (1,1):
-   * O paciente estava com Burnout.
-   * A IA disse que o paciente estava com Burnout.
-   * Conclusão: A IA acertou o estado de Burnout.
-* O quadrante superior direito (0,1):
-   * O paciente estava relaxado.
-   * A IA disse que o paciente estava com Burnout.
-   * Conclusão: A IA errou em dizer que o paciente estava com Burnout.
-* O quadrante inferior esquerdo (1,0):
-   * O paciente estava com Burnout.
-   * A IA disse que o paciente estava relaxado.
-   * Conclusão: A IA errou em dizer que o paciente estava relaxado.
+   ### 1.2. Horizontal/Bottom Axis:
+   Predicted Label. Represents what the AI predicted.
+   * 0 = AI said it is Relaxed.
+   * 1 = AI said it is Burnout.
+Therefore:
+* The upper left quadrant (0,0):
+   * The patient was relaxed.
+   * The AI said they were relaxed.
+   * Conclusion: The AI correctly identified the healthy state.
+* The lower right quadrant (1,1):
+   * The patient had Burnout.
+   * The AI said the patient had Burnout.
+   * Conclusion: The AI correctly identified the Burnout state.
+* The upper right quadrant (0,1):
+   * The patient was relaxed.
+   * The AI said the patient had Burnout.
+   * Conclusion: The AI incorrectly identified the patient as having Burnout.
+* The lower left quadrant (1,0):
+   * The patient had Burnout.
+   * The AI said the patient was relaxed.
+   * Conclusion: The AI incorrectly identified the patient as relaxed.
 
-## 2. Explicação do Gráfico do Ablation Study:
-O gráfico representa o estudo comparativo de impacto do filtro passa-banda (1-40Hz) na convergência da Rede Neural. O experimento consistiu em 5 sessões de treinamento independentes para avaliar a estabilidade do modelo:
-* **Linha Verde (Com Filtro):** Representa o modelo final validado. A oscilação observada reflete a complexidade de aprender padrões neurofisiológicos reais (ondas Beta) sem a influência de ruídos.
-* **Linha Vermelha (Sem Filtro):** Representa o controle (dados brutos). A menor oscilação sugere que a rede encontrou "atalhos" (overfitting) baseados em artefatos musculares constantes, o que invalida seu uso clínico.
+## 2. Explanation of the Ablation Study Graph:
+The graph represents the comparative impact study of the band-pass filter (1-40Hz) on Neural Network convergence. The experiment consisted of 5 independent training sessions to evaluate model stability:
+* **Green Line (With Filter):** Represents the final validated model. The observed oscillation reflects the complexity of learning real neurophysiological patterns (Beta waves) without the influence of noise.
+* **Red Line (Without Filter):** Represents the control (raw data). The smaller oscillation suggests that the network found "shortcuts" (overfitting) based on constant muscle artifacts, which invalidates its clinical use.
 
-> **Como Criar o Gráfico:** Está explícito a forma de criar o gráfico no tópico **Instalação e Configuração** nos passos 11 e 12.
-> **Detalhes Técnicos:** Para a discussão completa sobre a decisão de manter o filtro e a análise estatística dos dados, consulte o relatório técnico em [`results/ablation_study/RESULTS.md`](results/ablation_study/RESULTS.md).
+> **How to Create the Graph:** It is explicitly explained how to create the graph in the **Installation and Configuration** topic in steps 11 and 12.
+> **Technical Details:** For the full discussion on the decision to keep the filter and the statistical analysis of the data, consult the technical report in [`results/ablation_study/RESULTS.md`](results/ablation_study/RESULTS.md).
 
-# Autor
+# Author
 
 **Gabriel Farias Marcondes**
 
-* Curso: Ciência da Computação
+* Major: Computer Science
 
-* Projeto: Neurocomputação e BCI
+* Project: Neurocomputing and BCI
